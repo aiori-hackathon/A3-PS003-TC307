@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+
+# Databases
+data/*.db
+data/*.sqlite
+backend/data/*.db
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Environments
+.env
+.env.local
+.env.*.local
+*.log
+*.zip
+
+# OS
+.DS_Store
+Thumbs.db
+# Project virtual environment
+.venv/
+
+# Allow safe example environment templates
+!.env.example
+
+# Additional test and tool caches
+.mypy_cache/
+.ruff_cache/
