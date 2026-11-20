@@ -148,6 +148,8 @@ class PredictionResponse(BaseModel):
     predicted_congestion_level: str
     estimated_travel_time_min: float
     expected_congestion_onset: Optional[str] = None
+    congestion_trend: Optional[str] = 'stable'
+    recommended_departure_time: Optional[str] = None
     uncertainty_lower_volume: Optional[int] = None
     uncertainty_upper_volume: Optional[int] = None
     uncertainty_method: Optional[str] = None
@@ -472,3 +474,46 @@ class ResetPasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=128)
     confirm_password: Optional[str] = None
 
+
+
+class SavedRouteDTO(BaseModel):
+    id: str
+    user_id: Optional[str] = None
+    name: str
+    origin_id: str
+    destination_id: str
+    origin_name: str
+    destination_name: str
+    notes: Optional[str] = None
+    created_at: str
+
+
+class SavedRouteCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    origin_id: str = Field(..., min_length=1, max_length=50)
+    destination_id: str = Field(..., min_length=1, max_length=50)
+    origin_name: str = Field(..., min_length=1, max_length=100)
+    destination_name: str = Field(..., min_length=1, max_length=100)
+    notes: Optional[str] = None
+
+
+class CitizenReportDTO(BaseModel):
+    id: str
+    user_id: Optional[str] = None
+    category: str
+    location_name: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    description: str
+    photo_url: Optional[str] = None
+    status: str = "unverified"
+    created_at: str
+
+
+class CitizenReportCreateRequest(BaseModel):
+    category: str = Field(..., min_length=2, max_length=50)
+    location_name: str = Field(..., min_length=2, max_length=150)
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    description: str = Field(..., min_length=3, max_length=1000)
+    photo_url: Optional[str] = None

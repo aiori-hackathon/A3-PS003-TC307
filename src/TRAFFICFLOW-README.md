@@ -104,44 +104,115 @@ TrafficFlow-AI is a privacy-preserving, communication-efficient traffic predicti
 
 ---
 
-## 🚀 Exact Startup Commands
+## 🚀 Complete Step-by-Step Setup & Startup Guide
 
 ### Prerequisites
-- **Python**: 3.10+ (tested on Python 3.13)
-- **Node.js**: v18+ (tested on Node v24)
+- **Python**: 3.10+ (tested on Python 3.10, 3.12, and 3.13)
+- **Node.js**: v18+ (tested on Node v20 and v22)
 - **npm**: v10+
 
-### 1. Backend Server Startup
+---
+
+### 1. Backend Setup & Startup
+
+#### Step 1.1: Navigate to Backend Directory
 ```bash
-# Navigate to the backend directory
 cd backend
+```
 
-# (Optional) Activate your Python virtual environment
-# Windows: .venv\Scripts\activate
-# Linux/macOS: source .venv/bin/activate
+#### Step 1.2: Create and Activate Python Virtual Environment
+```bash
+# Create virtual environment
+python -m venv .venv
 
-# Install dependencies
+# Activate on Windows (PowerShell):
+.venv\Scripts\Activate.ps1
+# Or Windows (Command Prompt):
+.venv\Scripts\activate.bat
+# Or macOS / Linux:
+source .venv/bin/activate
+```
+
+#### Step 1.3: Install Backend Dependencies
+```bash
 pip install -r requirements.txt
+```
 
-# Start the FastAPI server using Uvicorn
+#### Step 1.4: Configure Environment Variables
+Copy the sanitized environment template to create your local `.env`:
+```bash
+# Windows:
+copy .env.example .env
+# macOS / Linux:
+cp .env.example .env
+```
+*(The default configuration runs out-of-the-box in development mode with SQLite persistence and simulated/calibrated Delhi telemetry.)*
+
+#### Step 1.5: Database Usage & Initialization
+- **Pre-seeded Database:** The repository includes `backend/data/trafficfl.db`, pre-seeded with 8 Delhi corridor intersections, 3 edge nodes, baseline incident alerts, historical observations, and pre-seeded demo accounts.
+- **Automatic Initialization:** If starting with an empty database or fresh environment, FastAPI automatically executes table creation (`Base.metadata.create_all`) and database seeding on application startup.
+
+#### Step 1.6: Start the FastAPI Backend
+```bash
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-The interactive OpenAPI/Swagger documentation is accessible at:  
-👉 `http://127.0.0.1:8000/docs`
+- API Base URL: `http://127.0.0.1:8000`
+- Interactive OpenAPI / Swagger Docs: `http://127.0.0.1:8000/docs`
+- Health Check: `http://127.0.0.1:8000/api/health`
 
-### 2. Frontend Development Server Startup
+---
+
+### 2. Frontend Setup & Startup
+
+#### Step 2.1: Open a New Terminal & Navigate to Frontend Directory
 ```bash
-# Navigate to the frontend directory
 cd frontend
+```
 
-# Install dependencies
+#### Step 2.2: Configure Frontend Environment Variables
+Copy the frontend environment template:
+```bash
+# Windows:
+copy .env.example .env
+# macOS / Linux:
+cp .env.example .env
+```
+*(Default `VITE_API_URL=http://127.0.0.1:8000/api` connects directly to the local backend.)*
+
+#### Step 2.3: Install Frontend Dependencies
+```bash
 npm install --legacy-peer-deps
+```
 
-# Start the Vite development server
+#### Step 2.4: Start the Vite Development Server
+```bash
 npm run dev
 ```
 Open your browser at:  
-👉 `http://127.0.0.1:5173`
+👉 **`http://localhost:5173`**
+
+---
+
+### 3. Demo Login Instructions & Credentials
+
+The application provides two flexible ways to evaluate both Authority Mode and Citizen Mode:
+
+#### Option A: 1-Click Direct Demo Login (Instant Evaluation)
+1. Navigate to `http://localhost:5173/login`.
+2. Under **"1-Click Direct Demo Login"**, click either:
+   - 🛡️ **"Authority Mode"**: Instantly signs in as the Municipal Traffic Director and redirects to `/dashboard`.
+   - 🛡️ **"General Public Mode"**: Instantly signs in as a Smart City Commuter and redirects to `/citizen`.
+
+#### Option B: Manual Sign In with Pre-Seeded Demo Credentials
+You may also manually enter the pre-seeded credentials or use the "Fill Authority / Fill Citizen" buttons:
+- **Authority Director Account:**
+  - **Email:** `admin@trafficfl.gov.in`
+  - **Password:** `TrafficFL@2026`
+  - **Access Role:** Administrator (`/dashboard`, `/map`, `/incidents`, `/analytics`, `/federated`, `/optimizer`)
+- **Citizen Resident Account:**
+  - **Email:** `citizen@trafficflow.ai`
+  - **Password:** `Citizen@2026`
+  - **Access Role:** Citizen (`/citizen`, `/routes`, `/privacy`, `/report`, `/assistant`)
 
 ---
 

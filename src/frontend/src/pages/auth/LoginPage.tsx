@@ -41,9 +41,15 @@ export const LoginPage: React.FC = () => {
   const [demoLoadingRole, setDemoLoadingRole] = useState<"authority" | "citizen" | null>(null);
 
   // Preserve intended destination after login, respecting role boundaries
-  const from = (location.state as any)?.from?.pathname || "/";
+  const savedRedirect = typeof sessionStorage !== "undefined" ? sessionStorage.getItem("trafficfl_redirect_from") : null;
+  const from = (location.state as any)?.from?.pathname || savedRedirect || "/";
 
   const getAuthorizedRedirect = (userRole?: string) => {
+    try {
+      sessionStorage.removeItem("trafficfl_redirect_from");
+    } catch {
+      // ignore
+    }
     const role = (userRole || "citizen").toLowerCase();
     const isCitizen = role === "citizen";
     if (from === "/" || from === "/login") {

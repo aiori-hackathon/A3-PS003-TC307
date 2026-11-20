@@ -19,6 +19,8 @@ import {
   BenchmarkCompareResponse,
   BenchmarkCompareRequest,
   TrafficDatasetInfo,
+  SavedRoute,
+  CitizenReport,
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
@@ -126,6 +128,19 @@ export const api = {
   getIntersections: () => fetchJson<IntersectionDetail[]>("/traffic/intersections"),
   getIntersectionDetail: (id: string) =>
     fetchJson<IntersectionDetail>(`/traffic/intersections/${id}`),
+  getLiveTrafficByCoordinates: (latitude: number, longitude: number) =>
+    fetchJson<{
+      traffic_available: boolean;
+      current_speed?: number;
+      free_flow_speed?: number;
+      confidence?: number;
+      road_closure?: boolean;
+      congestion_level?: string;
+      travel_time_seconds?: number;
+      free_flow_travel_time_seconds?: number;
+      provider_name?: string;
+      reason?: string;
+    }>(`/traffic/live-by-coordinates?latitude=${latitude}&longitude=${longitude}`),
   getTrafficHistory: (intersectionId?: string, limit = 48) => {
     const q = new URLSearchParams();
     if (intersectionId) q.append("intersection_id", intersectionId);
@@ -270,4 +285,42 @@ export const api = {
         selected_intersection_id: intersectionId,
       }),
     }),
+
+  // Citizen Commute Hub (Saved Routes & Community Reporting)
+  getSavedRoutes: () => fetchJson<SavedRoute[]>("/citizen/saved-routes"),
+  createSavedRoute: (route: {
+    name: string;
+    origin_id: string;
+    destination_id: string;
+    origin_name: string;
+    destination_name: string;
+    notes?: string;
+  }) =>
+    fetchJson<SavedRoute>("/citizen/saved-routes", {
+      method: "POST",
+      body: JSON.stringify(route),
+    }),
+  deleteSavedRoute: (routeId: string) =>
+    fetchJson<{ message: string; id: string }>(`/citizen/saved-routes/${routeId}`, {
+      method: "DELETE",
+    }),
+
+  getCitizenReports: () => fetchJson<CitizenReport[]>("/citizen/reports"),
+  createCitizenReport: (report: {
+    category: string;
+    location_name: string;
+    latitude?: number;
+    longitude?: number;
+    description: string;
+    photo_url?: string;
+  }) =>
+    fetchJson<CitizenReport>("/citizen/reports", {
+      method: "POST",
+      body: JSON.stringify(report),
+    }),
+  updateCitizenReportStatus: (reportId: string, status: "verified" | "dismissed" | "unverified") =>
+    fetchJson<{ message: string; id: string; status: string }>(
+      `/citizen/reports/${reportId}/status?status=${status}`,
+      { method: "PUT" }
+    ),
 };

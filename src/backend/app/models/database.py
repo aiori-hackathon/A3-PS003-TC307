@@ -146,3 +146,32 @@ class PasswordResetToken(Base):
 
     user = relationship("User", back_populates="reset_tokens")
 
+
+
+class SavedRoute(Base):
+    __tablename__ = "saved_routes"
+
+    id = Column(String(50), primary_key=True, index=True)
+    user_id = Column(String(50), nullable=True, index=True)
+    name = Column(String(100), nullable=False)
+    origin_id = Column(String(50), nullable=False)
+    destination_id = Column(String(50), nullable=False)
+    origin_name = Column(String(100), nullable=False)
+    destination_name = Column(String(100), nullable=False)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class CitizenReport(Base):
+    __tablename__ = "citizen_reports"
+
+    id = Column(String(50), primary_key=True, index=True)
+    user_id = Column(String(50), nullable=True, index=True)
+    category = Column(String(50), nullable=False)  # "road_blockage", "waterlogging", "damaged_road", "broken_signal", "accident"
+    location_name = Column(String(150), nullable=False)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    description = Column(Text, nullable=False)
+    photo_url = Column(Text, nullable=True)
+    status = Column(String(20), default="unverified")  # "unverified", "verified", "dismissed"
+    created_at = Column(DateTime, default=datetime.utcnow)

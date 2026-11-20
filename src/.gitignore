@@ -53,3 +53,5 @@ Thumbs.db
 # Additional test and tool caches
 .mypy_cache/
 .ruff_cache/
+# Local extraction directories
+TrafficFlow-AI-*/

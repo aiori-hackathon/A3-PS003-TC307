@@ -18,6 +18,8 @@ from backend.app.models.database import (
     CommunicationExperiment,
     IncidentAlert,
     User,
+    SavedRoute,
+    CitizenReport,
 )
 from backend.app.services.auth import require_roles
 from backend.app.schemas.schemas import (
@@ -33,6 +35,10 @@ from backend.app.schemas.schemas import (
     ClientStatus,
     BenchmarkCompareRequest,
     BenchmarkCompareResponse,
+    SavedRouteDTO,
+    SavedRouteCreateRequest,
+    CitizenReportDTO,
+    CitizenReportCreateRequest,
     TrafficDatasetInfo,
     OptimizerExperimentRequest,
     OptimizerExperimentResult,
@@ -78,6 +84,15 @@ def health_check():
 
 
 # --- Provider Status Diagnostics ---
+
+@router.get("/traffic/live-by-coordinates")
+async def get_live_traffic_by_coordinates(latitude: float, longitude: float):
+    """
+    Retrieves real-time TomTom traffic flow for ANY coordinates across India (Agra, Dehradun, Delhi, etc.)
+    without restricting to the local Delhi sensor dataset.
+    """
+    return await traffic_provider_instance.fetch_flow_by_coordinates(latitude, longitude)
+
 @router.get("/traffic/provider-status", response_model=ProviderStatusDTO)
 def get_traffic_provider_status():
     """Returns diagnostics for external live providers, caching, and fallback modes."""
@@ -1525,3 +1540,177 @@ def chat_with_assistant(req: ChatRequest, db: Session = Depends(get_db)):
         language=req.language or "en",
         selected_intersection_id=req.selected_intersection_id,
     )
+
+
+# --- Citizen Commuter Feature Endpoints (Saved Routes & Incident Reporting) ---
+
+@router.get("/citizen/saved-routes", response_model=List[SavedRouteDTO])
+def get_saved_routes(db: Session = Depends(get_db)):
+    """Returns all commuter-saved transit corridors."""
+    routes = db.query(SavedRoute).order_by(SavedRoute.created_at.desc()).all()
+    # Seed default sample saved routes if none exist yet
+    if not routes:
+        defaults = [
+            SavedRoute(
+                id="SR-01",
+                name="Daily Office Commute (CP to Cyber Hub)",
+                origin_id="INT-01",
+                destination_id="INT-07",
+                origin_name="Connaught Central Circle [INT-01]",
+                destination_name="Cyber Hub Gateway [INT-07]",
+                notes="Primary work corridor via NH-48 Express",
+                created_at=datetime.utcnow() - timedelta(days=2),
+            ),
+            SavedRoute(
+                id="SR-02",
+                name="Medical & Metro Corridor (AIIMS to Barakhamba)",
+                origin_id="INT-04",
+                destination_id="INT-02",
+                origin_name="Ring Road Arterial Junction [INT-04]",
+                destination_name="Barakhamba Road Crossing [INT-02]",
+                notes="Ring Road central connector",
+                created_at=datetime.utcnow() - timedelta(days=1),
+            ),
+        ]
+        db.add_all(defaults)
+        db.commit()
+        routes = defaults
+
+    return [
+        SavedRouteDTO(
+            id=r.id,
+            user_id=r.user_id,
+            name=r.name,
+            origin_id=r.origin_id,
+            destination_id=r.destination_id,
+            origin_name=r.origin_name,
+            destination_name=r.destination_name,
+            notes=r.notes,
+            created_at=r.created_at.isoformat() if r.created_at else datetime.utcnow().isoformat(),
+        )
+        for r in routes
+    ]
+
+
+@router.post("/citizen/saved-routes", response_model=SavedRouteDTO)
+def create_saved_route(req: SavedRouteCreateRequest, db: Session = Depends(get_db)):
+    """Saves a commuter corridor to persistent storage."""
+    route_id = f"SR-{uuid.uuid4().hex[:8].upper()}"
+    new_route = SavedRoute(
+        id=route_id,
+        name=req.name,
+        origin_id=req.origin_id,
+        destination_id=req.destination_id,
+        origin_name=req.origin_name,
+        destination_name=req.destination_name,
+        notes=req.notes,
+        created_at=datetime.utcnow(),
+    )
+    db.add(new_route)
+    db.commit()
+    db.refresh(new_route)
+    return SavedRouteDTO(
+        id=new_route.id,
+        user_id=new_route.user_id,
+        name=new_route.name,
+        origin_id=new_route.origin_id,
+        destination_id=new_route.destination_id,
+        origin_name=new_route.origin_name,
+        destination_name=new_route.destination_name,
+        notes=new_route.notes,
+        created_at=new_route.created_at.isoformat(),
+    )
+
+
+@router.delete("/citizen/saved-routes/{route_id}")
+def delete_saved_route(route_id: str, db: Session = Depends(get_db)):
+    """Removes a saved route corridor."""
+    route = db.query(SavedRoute).filter(SavedRoute.id == route_id).first()
+    if not route:
+        raise HTTPException(status_code=404, detail="Saved route not found")
+    db.delete(route)
+    db.commit()
+    return {"message": "Route deleted successfully", "id": route_id}
+
+
+@router.get("/citizen/reports", response_model=List[CitizenReportDTO])
+def get_citizen_reports(db: Session = Depends(get_db)):
+    """Returns citizen submitted road incident reports."""
+    reports = db.query(CitizenReport).order_by(CitizenReport.created_at.desc()).all()
+    # Seed a realistic initial unverified report if empty
+    if not reports:
+        seed_rep = CitizenReport(
+            id=f"REP-{uuid.uuid4().hex[:6].upper()}",
+            category="waterlogging",
+            location_name="Moolchand Underpass near Ring Road [INT-04]",
+            latitude=28.5672,
+            longitude=77.2100,
+            description="Moderate water accumulation on slow lane after rain; traffic moving cautiously.",
+            status="unverified",
+            created_at=datetime.utcnow() - timedelta(minutes=45),
+        )
+        db.add(seed_rep)
+        db.commit()
+        reports = [seed_rep]
+
+    return [
+        CitizenReportDTO(
+            id=rep.id,
+            user_id=rep.user_id,
+            category=rep.category,
+            location_name=rep.location_name,
+            latitude=rep.latitude,
+            longitude=rep.longitude,
+            description=rep.description,
+            photo_url=rep.photo_url,
+            status=rep.status,
+            created_at=rep.created_at.isoformat() if rep.created_at else datetime.utcnow().isoformat(),
+        )
+        for rep in reports
+    ]
+
+
+@router.post("/citizen/reports", response_model=CitizenReportDTO)
+def create_citizen_report(req: CitizenReportCreateRequest, db: Session = Depends(get_db)):
+    """
+    Submits a new citizen road issue. Strictly defaults to UNVERIFIED status.
+    Never published as confirmed incident telemetry until verified by traffic authority.
+    """
+    rep_id = f"REP-{uuid.uuid4().hex[:8].upper()}"
+    new_report = CitizenReport(
+        id=rep_id,
+        category=req.category,
+        location_name=req.location_name,
+        latitude=req.latitude,
+        longitude=req.longitude,
+        description=req.description,
+        photo_url=req.photo_url,
+        status="unverified",  # STRICT: Always unverified initially
+        created_at=datetime.utcnow(),
+    )
+    db.add(new_report)
+    db.commit()
+    db.refresh(new_report)
+    return CitizenReportDTO(
+        id=new_report.id,
+        user_id=new_report.user_id,
+        category=new_report.category,
+        location_name=new_report.location_name,
+        latitude=new_report.latitude,
+        longitude=new_report.longitude,
+        description=new_report.description,
+        photo_url=new_report.photo_url,
+        status=new_report.status,
+        created_at=new_report.created_at.isoformat(),
+    )
+
+
+@router.put("/citizen/reports/{report_id}/status")
+def update_citizen_report_status(report_id: str, status: str = Query(..., regex="^(verified|dismissed|unverified)$"), db: Session = Depends(get_db)):
+    """Authority endpoint to review, verify or dismiss a citizen report."""
+    rep = db.query(CitizenReport).filter(CitizenReport.id == report_id).first()
+    if not rep:
+        raise HTTPException(status_code=404, detail="Report not found")
+    rep.status = status
+    db.commit()
+    return {"message": f"Report {report_id} status updated to {status}", "id": report_id, "status": status}

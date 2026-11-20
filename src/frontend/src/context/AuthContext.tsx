@@ -34,16 +34,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
+      // If token is an offline demo token, retain local demo user session
+      if (storedToken.startsWith("offline_")) {
+        const savedUser = localStorage.getItem("trafficfl_user");
+        if (savedUser) {
+          try {
+            setUser(JSON.parse(savedUser));
+          } catch {
+            // invalid JSON fallback
+          }
+        }
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const currentUser = await api.getMe();
         setUser(currentUser);
         localStorage.setItem("trafficfl_user", JSON.stringify(currentUser));
-      } catch (err) {
-        console.warn("Session restore failed, clearing token:", err);
-        localStorage.removeItem("trafficfl_token");
-        localStorage.removeItem("trafficfl_user");
-        setToken(null);
-        setUser(null);
+      } catch (err: any) {
+        const msg = String(err?.message || "");
+        const isAuthRejection = msg.includes("401") || msg.includes("expired") || msg.includes("Invalid authentication token");
+        if (isAuthRejection) {
+          console.warn("Session expired or rejected, clearing token:", err);
+          localStorage.removeItem("trafficfl_token");
+          localStorage.removeItem("trafficfl_user");
+          setToken(null);
+          setUser(null);
+        } else {
+          console.warn("Transient error checking session on refresh, keeping cached user:", err);
+          const savedUser = localStorage.getItem("trafficfl_user");
+          if (savedUser) {
+            try {
+              setUser(JSON.parse(savedUser));
+            } catch {
+              // ignore parse errors
+            }
+          }
+        }
       } finally {
         setIsLoading(false);
       }

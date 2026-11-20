@@ -83,6 +83,8 @@ export interface PredictionResponse {
   predicted_congestion_level: "low" | "moderate" | "severe";
   estimated_travel_time_min?: number;
   expected_congestion_onset?: string | null;
+  congestion_trend?: "increasing" | "decreasing" | "stable";
+  recommended_departure_time?: string;
   uncertainty_lower_volume?: number | null;
   uncertainty_upper_volume?: number | null;
   uncertainty_method?: string | null;
@@ -390,3 +392,29 @@ export interface IncidentEvaluationResponse {
 }
 
 
+
+
+export interface SavedRoute {
+  id: string;
+  user_id?: string | null;
+  name: string;
+  origin_id: string;
+  destination_id: string;
+  origin_name: string;
+  destination_name: string;
+  notes?: string | null;
+  created_at: string;
+}
+
+export interface CitizenReport {
+  id: string;
+  user_id?: string | null;
+  category: "road_blockage" | "waterlogging" | "damaged_road" | "broken_signal" | "accident" | string;
+  location_name: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  description: string;
+  photo_url?: string | null;
+  status: "unverified" | "verified" | "dismissed";
+  created_at: string;
+}

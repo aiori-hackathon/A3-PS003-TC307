@@ -45,27 +45,13 @@ export const App: React.FC = () => {
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-              {/* Protected Routes inside AppLayout */}
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout />
-                  </ProtectedRoute>
-                }
-              >
+              {/* Main App Layout */}
+              <Route path="/" element={<AppLayout />}>
                 {/* Smart Root Index Route: Routes Citizens to /citizen and Admins to /dashboard */}
                 <Route index element={<DashboardRedirect />} />
 
-                {/* Citizen Commuter Portal (Accessible to Citizens and Admins) */}
-                <Route
-                  path="citizen"
-                  element={
-                    <ProtectedRoute allowedRoles={["citizen", "admin", "authority"]}>
-                      <CitizenDashboard />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Citizen Commuter Portal (Directly accessible to all users) */}
+                <Route path="citizen" element={<CitizenDashboard />} />
 
                 {/* Admin Municipal Overview Dashboard (Protected for Admin/Authority only) */}
                 <Route

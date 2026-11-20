@@ -348,6 +348,82 @@ class SharedTrafficProvider(TrafficProviderInterface):
         sanitized_final = self._sanitize_message(str(last_exc)) if last_exc else "Unknown TomTom fetch error"
         raise RuntimeError(f"TomTom fetch failed: {sanitized_final}")
 
+    async def fetch_flow_by_coordinates(
+        self, lat: float, lon: float
+    ) -> Dict[str, Any]:
+        """
+        Fetches real-time TomTom traffic flow segment data for ANY coordinates (Agra, Dehradun, Delhi, etc.)
+        across India and worldwide without restricting to predefined Delhi corridors.
+        """
+        self.reload_config()
+        if not self.api_key:
+            return {
+                "traffic_available": False,
+                "reason": "TomTom API key not configured on backend."
+            }
+
+        params = {
+            "point": f"{lat},{lon}",
+            "unit": "KMPH",
+            "key": self.api_key,
+        }
+
+        async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+            try:
+                response = await client.get(
+                    self.base_url,
+                    params=params,
+                    headers={"Accept": "application/json", "User-Agent": "TrafficFlow-AI/2.0"},
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    flow_data = data.get("flowSegmentData", {})
+                    if not flow_data:
+                        return {
+                            "traffic_available": False,
+                            "reason": "No live flow segment data found for these coordinates."
+                        }
+
+                    current_speed = float(flow_data.get("currentSpeed", 0.0))
+                    free_flow_speed = float(flow_data.get("freeFlowSpeed", current_speed or 40.0))
+                    confidence = float(flow_data.get("confidence", 0.95))
+                    road_closure = bool(flow_data.get("roadClosure", False))
+                    current_travel_time = flow_data.get("currentTravelTime")
+                    free_flow_travel_time = flow_data.get("freeFlowTravelTime")
+
+                    speed_ratio = current_speed / max(free_flow_speed, 10.0)
+                    if road_closure or current_speed < 18.0 or speed_ratio < 0.50:
+                        congestion = "severe"
+                    elif current_speed < 32.0 or speed_ratio < 0.75:
+                        congestion = "moderate"
+                    else:
+                        congestion = "low"
+
+                    return {
+                        "traffic_available": True,
+                        "current_speed": round(current_speed, 1),
+                        "free_flow_speed": round(free_flow_speed, 1),
+                        "confidence": round(confidence, 2),
+                        "road_closure": road_closure,
+                        "congestion_level": congestion,
+                        "travel_time_seconds": current_travel_time,
+                        "free_flow_travel_time_seconds": free_flow_travel_time,
+                        "provider_name": "TomTom Traffic Flow API",
+                    }
+                else:
+                    return {
+                        "traffic_available": False,
+                        "reason": f"TomTom returned status {response.status_code} for these coordinates."
+                    }
+            except Exception as exc:
+                sanitized = self._sanitize_message(str(exc))
+                logger.warning(f"TomTom coordinate fetch error for {lat},{lon}: {sanitized}")
+                return {
+                    "traffic_available": False,
+                    "reason": f"Live telemetry query error: {sanitized}"
+                }
+
+
     async def fetch_live_observations(
         self, intersection_ids: Optional[List[str]] = None
     ) -> List[TrafficObservationDTO]:

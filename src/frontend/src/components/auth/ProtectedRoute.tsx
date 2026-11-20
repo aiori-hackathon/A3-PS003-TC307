@@ -31,6 +31,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!isAuthenticated || !user) {
+    try {
+      if (location.pathname && location.pathname !== "/login") {
+        sessionStorage.setItem("trafficfl_redirect_from", location.pathname + location.search);
+      }
+    } catch {
+      // sessionStorage unavailable fallback
+    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

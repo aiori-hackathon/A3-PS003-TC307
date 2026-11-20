@@ -838,7 +838,20 @@ class TrafficPredictor:
             else "Corridor Baseline Stream + Ridge ML Model"
         )
 
+        speed_delta = speed_est - last_obs.average_speed
+        if speed_delta < -3.0 or pred_vol_int > last_obs.vehicle_volume * 1.10:
+            c_trend = "increasing"
+            dep_adv = "Depart immediately — corridor density expected to rise in 15–30m"
+        elif speed_delta > 3.0 or pred_vol_int < last_obs.vehicle_volume * 0.90:
+            c_trend = "decreasing"
+            dep_adv = "Optimal window — congestion is easing over the next 15–30m"
+        else:
+            c_trend = "stable"
+            dep_adv = "Depart now — steady, predictable corridor flow observed"
+
         return {
+            "congestion_trend": c_trend,
+            "recommended_departure_time": dep_adv,
             "intersection_id": intersection_id,
             "intersection_name": intersection.name,
             "intersection_name_hi": intersection.name_hi,
