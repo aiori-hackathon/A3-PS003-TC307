@@ -2,10 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "../../context/LanguageContext";
-import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import {
-  Radio,
   User as UserIcon,
   Mail,
   Lock,
@@ -14,15 +12,13 @@ import {
   ArrowRight,
   ShieldCheck,
   AlertCircle,
-  Sun,
-  Moon,
   Loader2,
 } from "lucide-react";
+import { TrafficFLMark } from "../../components/common/TrafficFLMark";
 
 export const RegisterPage: React.FC = () => {
   const { t } = useTranslation();
   const { language, setLanguage, isHindi } = useLanguage();
-  const { isDark, setTheme } = useTheme();
   const { register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -92,134 +88,121 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col justify-center items-center p-4 sm:p-6 bg-slate-100 dark:bg-navy-900 text-slate-800 dark:text-slate-100 font-sans relative overflow-x-hidden transition-colors duration-200">
-      {/* Background Subtle Glowing Grid Lines */}
-      <div className="absolute inset-0 pointer-events-none opacity-20 dark:opacity-25 overflow-hidden">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="reg-grid" width="80" height="80" patternUnits="userSpaceOnUse">
-              <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#3B82F6" strokeWidth="1" strokeDasharray="6 6" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#reg-grid)" />
-        </svg>
-      </div>
+    <div className="min-h-screen w-full flex flex-col justify-center items-center p-4 sm:p-6 bg-[#090A0D] text-[#F5F7FA] font-sans relative overflow-x-hidden selection:bg-[#9AC2FA]/30 selection:text-white">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(96,165,250,0.06),_transparent_45%),radial-gradient(ellipse_at_bottom_right,_rgba(30,41,59,0.22),_transparent_55%)]"
+      />
 
-      {/* Top Bar with Language and Theme Controls */}
-      <div className="w-full max-w-lg flex items-center justify-between mb-4 z-10">
-        <Link to="/login" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow">
-            <Radio className="w-4 h-4 animate-pulse" />
-          </div>
-          <span className="font-extrabold text-lg tracking-wide text-slate-900 dark:text-white">
-            Traffic<span className="text-blue-600 dark:text-blue-400">FL</span>
+      {/* Top Bar with Language Switch */}
+      <div className="w-full max-w-[495px] flex items-center justify-between mb-6 z-10">
+        <Link
+          to="/login"
+          className="inline-flex items-center gap-2.5 text-white hover:opacity-90 transition-opacity"
+        >
+          <TrafficFLMark />
+          <span className="font-serif text-[21px] font-medium tracking-[-0.01em] text-white">
+            TrafficFL
           </span>
         </Link>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center p-0.5 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-xs shadow-sm">
-            <button
-              onClick={() => setLanguage("en")}
-              className={`px-2 py-1 rounded font-bold transition-all ${
-                language === "en" ? "bg-blue-600 text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              EN
-            </button>
-            <button
-              onClick={() => setLanguage("hi")}
-              className={`px-2 py-1 rounded font-bold font-sans transition-all ${
-                language === "hi" ? "bg-blue-600 text-white" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              हिंदी
-            </button>
-          </div>
-
+        <div className="flex items-center gap-2 text-xs">
           <button
-            onClick={() => setTheme(isDark ? "light" : "dark")}
-            className="p-2 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors shadow-sm cursor-pointer"
-            title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            type="button"
+            onClick={() => setLanguage("en")}
+            className={`px-2 py-1 rounded transition-colors cursor-pointer ${
+              language === "en" ? "text-zinc-200 underline underline-offset-4" : "text-zinc-500 hover:text-zinc-300"
+            }`}
           >
-            {isDark ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-slate-700" />}
+            EN
+          </button>
+          <span className="text-zinc-700">/</span>
+          <button
+            type="button"
+            onClick={() => setLanguage("hi")}
+            className={`px-2 py-1 rounded transition-colors cursor-pointer ${
+              language === "hi" ? "text-zinc-200 underline underline-offset-4" : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            हिंदी
           </button>
         </div>
       </div>
 
-      {/* Register Frosted Card */}
-      <div className="w-full max-w-lg rounded-3xl bg-white/95 dark:bg-slate-900/85 border border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-2xl backdrop-blur-xl p-6 sm:p-8 space-y-5 z-10 transition-colors duration-200">
+      {/* Register Card */}
+      <div className="w-full max-w-[495px] rounded-2xl bg-[#111318]/95 border border-white/[0.08] shadow-[0_24px_64px_rgba(0,0,0,0.75)] backdrop-blur-md p-6 sm:p-8 space-y-5 z-10">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="font-serif text-2xl sm:text-[28px] font-medium text-white tracking-[-0.015em]">
             {t("auth.register_title")}
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          </h1>
+          <p className="text-xs sm:text-sm text-[#C5C8D0] mt-1.5 leading-relaxed">
             {t("auth.register_subtitle")}
           </p>
         </div>
 
         {errorMsg && (
-          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-300 text-xs flex items-center gap-2 animate-in fade-in duration-150">
-            <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+          <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-200 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         <form onSubmit={handleRegister} className="space-y-4">
           {/* Full Name */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#EAECEF] block">
               {t("auth.fullname_label")}
             </label>
             <div className="relative">
-              <UserIcon className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+              <UserIcon className="w-4 h-4 absolute left-3.5 top-3 text-[#7E8594]" />
               <input
                 type="text"
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder={t("auth.fullname_placeholder")}
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-lg bg-[#1B1D22] border border-white/[0.08] text-[#F5F7FA] placeholder-[#7A8191] text-sm focus:outline-none focus:border-[#9AC2FA]/50 focus:ring-1 focus:ring-[#9AC2FA]/40 transition-colors"
               />
             </div>
           </div>
 
           {/* Email Address */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#EAECEF] block">
               {t("auth.email_label")}
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+              <Mail className="w-4 h-4 absolute left-3.5 top-3 text-[#7E8594]" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t("auth.email_placeholder")}
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-lg bg-[#1B1D22] border border-white/[0.08] text-[#F5F7FA] placeholder-[#7A8191] text-sm focus:outline-none focus:border-[#9AC2FA]/50 focus:ring-1 focus:ring-[#9AC2FA]/40 transition-colors"
               />
             </div>
           </div>
 
           {/* Password & Strength */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#EAECEF] block">
               {t("auth.password_label")}
             </label>
             <div className="relative">
-              <Lock className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+              <Lock className="w-4 h-4 absolute left-3.5 top-3 text-[#7E8594]" />
               <input
                 type={showPassword ? "text" : "password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t("auth.password_placeholder")}
-                className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-10 py-2.5 rounded-lg bg-[#1B1D22] border border-white/[0.08] text-[#F5F7FA] placeholder-[#7A8191] text-sm focus:outline-none focus:border-[#9AC2FA]/50 focus:ring-1 focus:ring-[#9AC2FA]/40 transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                className="absolute right-3.5 top-3 text-[#8C93A4] hover:text-white cursor-pointer"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -229,10 +212,10 @@ export const RegisterPage: React.FC = () => {
             {password && (
               <div className="pt-1.5 space-y-1">
                 <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-500 dark:text-slate-400">{t("auth.password_strength")}:</span>
-                  <span className="font-semibold text-slate-700 dark:text-slate-300">{strength.label}</span>
+                  <span className="text-[#8C93A4]">{t("auth.password_strength")}:</span>
+                  <span className="font-semibold text-[#EAECEF]">{strength.label}</span>
                 </div>
-                <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                <div className="w-full h-1.5 rounded-full bg-[#1B1D22] overflow-hidden">
                   <div
                     className={`h-full transition-all duration-300 ${strength.color}`}
                     style={{ width: `${strength.score}%` }}
@@ -243,24 +226,24 @@ export const RegisterPage: React.FC = () => {
           </div>
 
           {/* Confirm Password */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#EAECEF] block">
               {t("auth.confirm_password_label")}
             </label>
             <div className="relative">
-              <Lock className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+              <Lock className="w-4 h-4 absolute left-3.5 top-3 text-[#7E8594]" />
               <input
                 type={showConfirmPassword ? "text" : "password"}
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder={t("auth.confirm_password_placeholder")}
-                className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-10 py-2.5 rounded-lg bg-[#1B1D22] border border-white/[0.08] text-[#F5F7FA] placeholder-[#7A8191] text-sm focus:outline-none focus:border-[#9AC2FA]/50 focus:ring-1 focus:ring-[#9AC2FA]/40 transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                className="absolute right-3.5 top-3 text-[#8C93A4] hover:text-white cursor-pointer"
               >
                 {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -268,23 +251,23 @@ export const RegisterPage: React.FC = () => {
           </div>
 
           {/* Terms Checkbox */}
-          <div className="flex items-start gap-2 pt-1">
+          <div className="flex items-start gap-2.5 pt-1">
             <input
               type="checkbox"
               id="agree"
               checked={agreeTerms}
               onChange={(e) => setAgreeTerms(e.target.checked)}
-              className="w-4 h-4 rounded bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 mt-0.5 cursor-pointer"
+              className="w-4 h-4 rounded bg-[#1B1D22] border-white/20 text-[#9AC2FA] focus:ring-[#9AC2FA]/40 mt-0.5 cursor-pointer"
             />
-            <label htmlFor="agree" className="text-xs text-slate-600 dark:text-slate-400 cursor-pointer leading-tight">
+            <label htmlFor="agree" className="text-xs text-[#C5C8D0] cursor-pointer leading-snug">
               {t("auth.agree_terms")}
             </label>
           </div>
 
           {/* Public Citizen Notice */}
-          <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-[11px] text-blue-800 dark:text-blue-300 flex items-start gap-2">
-            <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-            <span>
+          <div className="p-3 rounded-lg bg-[#161920] border border-white/[0.08] text-[11px] text-[#C5C8D0] flex items-start gap-2">
+            <ShieldCheck className="w-4 h-4 text-[#9AC2FA] shrink-0 mt-0.5" />
+            <span className="leading-relaxed">
               {isHindi
                 ? "सार्वजनिक पंजीकरण द्वारा 'नागरिक खाता (Citizen)' प्रदान किया जाता है। ट्रैफिक अथॉरिटी एक्सेस हेतु विभागीय आमंत्रण आवश्यक है।"
                 : "Public registration provisions a standard Citizen Commuter account. Traffic Authority accounts require departmental administrative verification."}
@@ -295,7 +278,7 @@ export const RegisterPage: React.FC = () => {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-blue-600/30 transition-all disabled:opacity-60 cursor-pointer"
+            className="w-full h-11 flex items-center justify-center gap-2 py-2.5 px-5 rounded-xl bg-[#9AC2FA] hover:bg-[#B0D0FC] text-[#0A0D14] font-semibold text-sm transition-colors disabled:opacity-60 cursor-pointer"
           >
             {submitting ? (
               <>
@@ -311,11 +294,11 @@ export const RegisterPage: React.FC = () => {
           </button>
         </form>
 
-        <div className="text-center pt-2 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800">
+        <div className="text-center pt-3 text-xs text-[#9CA3AF] border-t border-white/[0.08]">
           <span>{t("auth.already_have_account")}{" "}</span>
           <Link
             to="/login"
-            className="font-semibold text-blue-600 dark:text-blue-400 hover:underline underline-offset-4"
+            className="font-medium text-[#70A3F3] hover:text-[#9AC2FA] hover:underline underline-offset-4 transition-colors"
           >
             {t("auth.sign_in_link")}
           </Link>

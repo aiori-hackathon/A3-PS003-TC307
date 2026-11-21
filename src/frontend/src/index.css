@@ -2,9 +2,79 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --tfl-bg: #f8fafc;
+  --tfl-surface: #ffffff;
+  --tfl-surface-2: #f1f5f9;
+  --tfl-input: #f8fafc;
+  --tfl-border: rgba(15, 23, 42, 0.1);
+  --tfl-border-strong: rgba(15, 23, 42, 0.18);
+  --tfl-text: #0f172a;
+  --tfl-muted: #64748b;
+  --tfl-accent: #2563eb;
+  --tfl-accent-ink: #ffffff;
+  --tfl-chart-grid: rgba(100, 116, 139, 0.18);
+  --tfl-chart-tooltip-bg: #111318;
+  --tfl-chart-tooltip-border: rgba(255, 255, 255, 0.12);
+}
+
+.dark {
+  --tfl-bg: #090a0d;
+  --tfl-surface: #111318;
+  --tfl-surface-2: #161920;
+  --tfl-input: #1b1d22;
+  --tfl-border: rgba(255, 255, 255, 0.08);
+  --tfl-border-strong: rgba(255, 255, 255, 0.15);
+  --tfl-text: #f5f7fa;
+  --tfl-muted: #8c93a4;
+  --tfl-accent: #9ac2fa;
+  --tfl-accent-ink: #0a0d14;
+  --tfl-chart-grid: rgba(255, 255, 255, 0.08);
+  --tfl-chart-tooltip-bg: #111318;
+  --tfl-chart-tooltip-border: rgba(255, 255, 255, 0.14);
+}
+
 @layer base {
   html {
     font-family: 'Inter', 'Noto Sans Devanagari', system-ui, -apple-system, sans-serif;
+    background-color: var(--tfl-bg);
+    color: var(--tfl-text);
+  }
+
+  body {
+    background-color: var(--tfl-bg);
+    color: var(--tfl-text);
+  }
+}
+
+@layer components {
+  .tfl-card {
+    @apply rounded-2xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] shadow-sm dark:shadow-[0_14px_34px_rgba(0,0,0,0.42)] transition-colors duration-150;
+  }
+
+  .tfl-card-subtle {
+    @apply rounded-xl bg-slate-50 dark:bg-[#161920] border border-slate-200 dark:border-white/[0.07];
+  }
+
+  .tfl-input {
+    @apply rounded-lg bg-slate-50 dark:bg-[#1B1D22] border border-slate-300 dark:border-white/[0.09] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#7C8495] focus:outline-none focus:border-blue-500 dark:focus:border-[#9AC2FA]/60 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-[#9AC2FA]/20 transition-all;
+  }
+
+  .tfl-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-[#9AC2FA] dark:hover:bg-[#B0D0FC] text-white dark:text-[#0A0D14] font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer;
+  }
+
+  .tfl-btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 dark:border-white/[0.14] bg-white dark:bg-white/[0.02] hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-[#E5E7EB] font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
+  }
+
+  .tfl-heading {
+    @apply font-serif font-medium tracking-[-0.015em] text-slate-900 dark:text-white;
+  }
+
+  .login-dark-input {
+    color-scheme: dark;
+    caret-color: #f4f5f7;
   }
 }
 
@@ -17,11 +87,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.4);
+  background: rgba(140, 147, 164, 0.35);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.7);
+  background: rgba(154, 194, 250, 0.55);
 }
 
 /* Responsive grid utility helpers */
@@ -46,10 +116,72 @@
   }
 }
 
-/* Leaflet container responsive fix */
+/* Leaflet container & obsidian map chrome */
 .leaflet-container {
   width: 100%;
   height: 100%;
   border-radius: 0.75rem;
   z-index: 10;
+  background: #0d1016;
+}
+
+.dark .leaflet-tile-pane {
+  filter: brightness(0.84) contrast(1.08) saturate(0.85);
+}
+
+.dark .leaflet-control-zoom a {
+  background-color: #111318 !important;
+  color: #f5f7fa !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.dark .leaflet-control-zoom a:hover {
+  background-color: #1b1d22 !important;
+  color: #9ac2fa !important;
+}
+
+.dark .leaflet-popup-content-wrapper,
+.dark .leaflet-popup-tip {
+  background-color: #111318 !important;
+  color: #f5f7fa !important;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.65) !important;
+}
+
+.dark .leaflet-control-attribution {
+  background: rgba(9, 10, 13, 0.78) !important;
+  color: #8c93a4 !important;
+}
+
+.dark .leaflet-control-attribution a {
+  color: #9ac2fa !important;
+}
+
+/* Login soft-charcoal input autofill guard (prevents white/pale-yellow UA fill) */
+.login-dark-input:-webkit-autofill,
+.login-dark-input:-webkit-autofill:active,
+.login-dark-input:autofill {
+  color-scheme: dark;
+  -webkit-text-fill-color: #f4f5f7 !important;
+  caret-color: #f4f5f7 !important;
+  background-color: #252932 !important;
+  border-color: #363b45 !important;
+  -webkit-box-shadow: 0 0 0 1000px #252932 inset !important;
+  box-shadow: 0 0 0 1000px #252932 inset !important;
+  transition: background-color 999999s ease-in-out 0s, color 999999s ease-in-out 0s;
+}
+
+.login-dark-input:-webkit-autofill:hover,
+.login-dark-input:autofill:hover {
+  border-color: #464d5b !important;
+  -webkit-box-shadow: 0 0 0 1000px #2b303b inset !important;
+  box-shadow: 0 0 0 1000px #2b303b inset !important;
+}
+
+.login-dark-input:-webkit-autofill:focus,
+.login-dark-input:-webkit-autofill:hover:focus,
+.login-dark-input:autofill:focus {
+  border-color: #80b9f5 !important;
+  -webkit-box-shadow: 0 0 0 1000px #252932 inset, 0 0 0 3px rgba(128, 185, 245, 0.24) !important;
+  box-shadow: 0 0 0 1000px #252932 inset, 0 0 0 3px rgba(128, 185, 245, 0.24) !important;
 }

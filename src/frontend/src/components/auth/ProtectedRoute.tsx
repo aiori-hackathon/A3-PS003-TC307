@@ -31,21 +31,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!isAuthenticated || !user) {
-    try {
-      if (location.pathname && location.pathname !== "/login") {
-        sessionStorage.setItem("trafficfl_redirect_from", location.pathname + location.search);
-      }
-    } catch {
-      // sessionStorage unavailable fallback
-    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Enforce role-based authorization if allowedRoles are specified
   if (allowedRoles && allowedRoles.length > 0) {
     const userRole = (user.role || "citizen").toLowerCase();
+    const authorityRoles = new Set(["admin", "system_admin", "authority", "traffic_controller"]);
+    const allowsAuthority = allowedRoles.some((r) => authorityRoles.has(r.toLowerCase()));
     const isAllowed = allowedRoles.some(
-      (role) => role.toLowerCase() === userRole || (userRole === "admin" && role === "authority") || (userRole === "authority" && role === "admin")
+      (role) =>
+        role.toLowerCase() === userRole ||
+        (allowsAuthority && authorityRoles.has(userRole))
     );
 
     if (!isAllowed) {

@@ -1,5 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { api } from "../services/api";
+import {
+  api,
+  AUTH_TOKEN_KEY,
+  clearAuthSession,
+  getStoredAuthToken,
+  getStoredAuthUser,
+  persistAuthSession,
+} from "../services/api";
 import { User, AuthTokenResponse } from "../types";
 
 interface AuthContextType {
@@ -16,34 +23,15 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem("trafficfl_token");
-  });
-  const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem("trafficfl_user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [token, setToken] = useState<string | null>(() => getStoredAuthToken());
+  const [user, setUser] = useState<User | null>(() => getStoredAuthUser<User>());
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Restore authenticated session after refresh
+  // Restore authenticated session after refresh, preserving remembered vs tab-only storage
   useEffect(() => {
     const checkAuth = async () => {
-      const storedToken = localStorage.getItem("trafficfl_token");
+      const storedToken = getStoredAuthToken();
       if (!storedToken) {
-        setIsLoading(false);
-        return;
-      }
-
-      // If token is an offline demo token, retain local demo user session
-      if (storedToken.startsWith("offline_")) {
-        const savedUser = localStorage.getItem("trafficfl_user");
-        if (savedUser) {
-          try {
-            setUser(JSON.parse(savedUser));
-          } catch {
-            // invalid JSON fallback
-          }
-        }
         setIsLoading(false);
         return;
       }
@@ -51,27 +39,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const currentUser = await api.getMe();
         setUser(currentUser);
-        localStorage.setItem("trafficfl_user", JSON.stringify(currentUser));
-      } catch (err: any) {
-        const msg = String(err?.message || "");
-        const isAuthRejection = msg.includes("401") || msg.includes("expired") || msg.includes("Invalid authentication token");
-        if (isAuthRejection) {
-          console.warn("Session expired or rejected, clearing token:", err);
-          localStorage.removeItem("trafficfl_token");
-          localStorage.removeItem("trafficfl_user");
-          setToken(null);
-          setUser(null);
-        } else {
-          console.warn("Transient error checking session on refresh, keeping cached user:", err);
-          const savedUser = localStorage.getItem("trafficfl_user");
-          if (savedUser) {
-            try {
-              setUser(JSON.parse(savedUser));
-            } catch {
-              // ignore parse errors
-            }
-          }
-        }
+        const rememberDevice = Boolean(localStorage.getItem(AUTH_TOKEN_KEY));
+        persistAuthSession(storedToken, currentUser, rememberDevice);
+      } catch (err) {
+        console.warn("Session restore failed, clearing token:", err);
+        clearAuthSession();
+        setToken(null);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -80,11 +54,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
-  const handleAuthSuccess = (authRes: AuthTokenResponse) => {
+  const handleAuthSuccess = (authRes: AuthTokenResponse, rememberDevice = true) => {
     setToken(authRes.access_token);
     setUser(authRes.user);
-    localStorage.setItem("trafficfl_token", authRes.access_token);
-    localStorage.setItem("trafficfl_user", JSON.stringify(authRes.user));
+    persistAuthSession(authRes.access_token, authRes.user, rememberDevice);
   };
 
   const isOfflineDemoEnabled = import.meta.env.VITE_ENABLE_OFFLINE_DEMO_LOGIN === "true";
@@ -93,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const authRes = await api.login(email, password, rememberMe);
-      handleAuthSuccess(authRes);
+      handleAuthSuccess(authRes, rememberMe);
     } catch (err: any) {
       // Offline fallback only when explicitly enabled via VITE_ENABLE_OFFLINE_DEMO_LOGIN
       if (isOfflineDemoEnabled) {
@@ -115,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               is_demo: true,
               created_at: new Date().toISOString(),
             },
-          });
+          }, rememberMe);
           return;
         } else if (
           (normalizedEmail === "citizen@trafficflow.ai" && (password === "Citizen@2026" || password === "citizen" || password === "12345678")) ||
@@ -134,7 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               is_demo: true,
               created_at: new Date().toISOString(),
             },
-          });
+          }, rememberMe);
           return;
         }
       }
@@ -209,8 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setToken(null);
       setUser(null);
-      localStorage.removeItem("trafficfl_token");
-      localStorage.removeItem("trafficfl_user");
+      clearAuthSession();
     }
   };
 

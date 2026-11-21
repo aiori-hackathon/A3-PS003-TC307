@@ -173,5 +173,89 @@ class CitizenReport(Base):
     longitude = Column(Float, nullable=True)
     description = Column(Text, nullable=False)
     photo_url = Column(Text, nullable=True)
-    status = Column(String(20), default="unverified")  # "unverified", "verified", "dismissed"
+    status = Column(String(30), default="unverified")  # "unverified", "verified", "in_progress", "resolved", "dismissed"
+    resolution_note = Column(Text, nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    timelines = relationship("CitizenReportTimeline", back_populates="report", cascade="all, delete-orphan", order_by="CitizenReportTimeline.created_at.asc()")
+
+
+class CitizenReportTimeline(Base):
+    __tablename__ = "citizen_report_timelines"
+
+    id = Column(String(50), primary_key=True, index=True)
+    report_id = Column(String(50), ForeignKey("citizen_reports.id"), nullable=False, index=True)
+    from_status = Column(String(30), nullable=False)
+    to_status = Column(String(30), nullable=False)
+    resolution_note = Column(Text, nullable=True)
+    actor_id = Column(String(50), nullable=True)
+    actor_role = Column(String(50), default="authority")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    report = relationship("CitizenReport", back_populates="timelines")
+
+
+class CitizenNotification(Base):
+    __tablename__ = "citizen_notifications"
+
+    id = Column(String(50), primary_key=True, index=True)
+    user_id = Column(String(50), nullable=False, index=True)
+    report_id = Column(String(50), ForeignKey("citizen_reports.id"), nullable=False, index=True)
+    title = Column(String(150), nullable=False)
+    message = Column(Text, nullable=False)
+    status = Column(String(30), nullable=False)
+    resolution_note = Column(Text, nullable=True)
+    location_name = Column(String(150), nullable=True)
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+
+class EmergencyCorridorRequest(Base):
+    __tablename__ = "emergency_corridor_requests"
+
+    id = Column(String(50), primary_key=True, index=True)
+    user_id = Column(String(50), nullable=True, index=True)
+    vehicle_type = Column(String(30), nullable=False)  # "ambulance", "fire_brigade", "police"
+    origin_id = Column(String(50), nullable=False)
+    origin_name = Column(String(150), nullable=False)
+    origin_lat = Column(Float, nullable=True)
+    origin_lon = Column(Float, nullable=True)
+    destination_id = Column(String(50), nullable=False)
+    destination_name = Column(String(150), nullable=False)
+    destination_lat = Column(Float, nullable=True)
+    destination_lon = Column(Float, nullable=True)
+    priority = Column(String(20), default="critical")  # "critical", "high", "medium"
+    description = Column(Text, nullable=True)
+    status = Column(String(30), default="REQUESTED")  # "REQUESTED", "APPROVED", "REJECTED", "ACTIVE", "COMPLETED", "CANCELLED"
+    recommended_route_id = Column(String(50), nullable=True)
+    route_path = Column(Text, nullable=True)  # JSON-serialized list of intersection IDs
+    distance_km = Column(Float, default=0.0)
+    estimated_time_minutes = Column(Float, default=0.0)
+    priority_intersections_count = Column(Integer, default=0)
+    authority_notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    timelines = relationship(
+        "EmergencyCorridorTimeline",
+        back_populates="request",
+        cascade="all, delete-orphan",
+        order_by="EmergencyCorridorTimeline.created_at.asc()"
+    )
+
+
+class EmergencyCorridorTimeline(Base):
+    __tablename__ = "emergency_corridor_timelines"
+
+    id = Column(String(50), primary_key=True, index=True)
+    request_id = Column(String(50), ForeignKey("emergency_corridor_requests.id"), nullable=False, index=True)
+    from_status = Column(String(30), nullable=False)
+    to_status = Column(String(30), nullable=False)
+    notes = Column(Text, nullable=True)
+    actor_id = Column(String(50), nullable=True)
+    actor_role = Column(String(50), default="authority")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    request = relationship("EmergencyCorridorRequest", back_populates="timelines")

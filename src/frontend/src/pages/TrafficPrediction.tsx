@@ -23,6 +23,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { PageHeroHeader, TFL_CHART_THEME } from "../components/common/DesignSystem";
 
 export const TrafficPrediction: React.FC = () => {
   const { t } = useTranslation();
@@ -61,26 +62,23 @@ export const TrafficPrediction: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="pb-2 border-b border-slate-200 dark:border-slate-800">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-          {t("prediction.title")}
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          {t("prediction.subtitle")}
-        </p>
-      </div>
+      <PageHeroHeader
+        eyebrow="Forecasting Intelligence"
+        title={t("prediction.title")}
+        subtitle={t("prediction.subtitle")}
+      />
 
       {/* Control Selector Bar */}
-      <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-4">
+      <div className="p-4 rounded-2xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] shadow-sm flex flex-wrap items-center justify-between gap-4">
         {/* Intersection Dropdown */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+          <label className="text-xs font-semibold text-slate-700 dark:text-[#C5C8D0]">
             {t("prediction.select_label")}:
           </label>
           <select
             value={selectedId}
             onChange={(e) => setSelectedId(e.target.value)}
-            className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#1B1D22] border border-slate-200 dark:border-white/[0.10] text-xs font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:focus:ring-[#9AC2FA]/40"
           >
             {intersections.map((i) => (
               <option key={i.id} value={i.id}>
@@ -92,10 +90,10 @@ export const TrafficPrediction: React.FC = () => {
 
         {/* Horizon Selector */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+          <span className="text-xs font-semibold text-slate-700 dark:text-[#C5C8D0]">
             {t("prediction.horizon_label")}:
           </span>
-          <div className="flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-slate-700">
+          <div className="flex rounded-xl bg-slate-100 dark:bg-[#161920] p-1 border border-slate-200 dark:border-white/[0.08]">
             {[
               { val: 15, label: "15m" },
               { val: 30, label: "30m" },
@@ -106,10 +104,10 @@ export const TrafficPrediction: React.FC = () => {
               <button
                 key={item.val}
                 onClick={() => setHorizon(item.val)}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                   horizon === item.val
-                    ? "bg-blue-600 text-white shadow"
-                    : "text-slate-600 dark:text-slate-300 hover:text-blue-500"
+                    ? "bg-blue-600 text-white dark:bg-[#9AC2FA] dark:text-[#0A0D14] shadow-xs"
+                    : "text-slate-600 dark:text-[#8C93A4] hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 {item.label}
@@ -145,50 +143,50 @@ export const TrafficPrediction: React.FC = () => {
       )}
 
       {/* Provenance & Freshness Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs">
-        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-          <span className={`inline-block w-2 h-2 rounded-full ${prediction?.is_simulated ? "bg-blue-500" : "bg-emerald-500"} animate-pulse`} />
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-slate-100/80 dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] text-xs">
+        <div className="flex items-center gap-2 text-slate-600 dark:text-[#C5C8D0]">
+          <span className={`inline-block w-2 h-2 rounded-full ${prediction?.is_simulated ? "bg-[#9AC2FA]" : "bg-emerald-500"}`} />
           <span className="font-semibold">{isHindi ? "डेटा स्रोत:" : "Data Stream:"}</span>
-          <span className="text-slate-700 dark:text-slate-200">{prediction?.data_source || "Synthetic Delhi NCR Sensor Stream"}</span>
+          <span className="text-slate-700 dark:text-white">{prediction?.data_source || "Synthetic Delhi NCR Sensor Stream"}</span>
           <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
             prediction?.is_simulated
-              ? "bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 border border-blue-300"
-              : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-300"
+              ? "bg-blue-100 text-blue-800 dark:bg-[#9AC2FA]/10 dark:text-[#9AC2FA] border border-blue-300 dark:border-[#9AC2FA]/25"
+              : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60"
           }`}>
             {prediction?.is_simulated ? "Simulation Stream" : "Live Provider"}
           </span>
         </div>
-        <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400 text-[11px]">
-          <span>{isHindi ? "ताज़ापन:" : "Freshness:"} <b className="text-slate-700 dark:text-slate-200">{prediction?.data_freshness || "Current (< 15 min)"}</b></span>
+        <div className="flex items-center gap-4 text-slate-500 dark:text-[#8C93A4] text-[11px]">
+          <span>{isHindi ? "ताज़ापन:" : "Freshness:"} <b className="text-slate-700 dark:text-white">{prediction?.data_freshness || "Current (< 15 min)"}</b></span>
           <span>{isHindi ? "स्थिति:" : "Readiness:"} <b className={`font-mono uppercase font-bold ${prediction?.model_readiness === "ready" ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>{prediction?.model_readiness || "ready"}</b></span>
-          <span>{isHindi ? "मॉडल:" : "Model:"} <b className="font-mono text-slate-700 dark:text-slate-200">{prediction?.model_version || `v2.1-ridge-h${horizon}`}</b></span>
+          <span>{isHindi ? "मॉडल:" : "Model:"} <b className="font-mono text-slate-700 dark:text-white">{prediction?.model_version || `v2.1-ridge-h${horizon}`}</b></span>
         </div>
       </div>
 
       {/* Metrics Row: Chronological Test Evaluation & Travel Time */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Predicted Volume & Speed */}
-        <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 shadow-sm">
-          <div className="flex items-center justify-between text-xs text-blue-700 dark:text-blue-300 font-semibold">
+        <div className="p-4 rounded-xl bg-blue-50 dark:bg-[#111318] border border-blue-200 dark:border-[#9AC2FA]/30 shadow-sm">
+          <div className="flex items-center justify-between text-xs text-blue-700 dark:text-[#9AC2FA] font-semibold">
             <span>{isHindi ? "पूर्वानुमानित वॉल्यूम" : "Predicted Traffic"}</span>
             <TrendingUp className="w-3.5 h-3.5" />
           </div>
-          <p className="text-2xl font-bold text-blue-950 dark:text-blue-100 mt-1">
+          <p className="text-2xl font-serif font-semibold text-blue-950 dark:text-white mt-1 tabular-nums">
             {prediction?.model_readiness === "ready" ? (
               <>
                 {prediction.predicted_volume}{" "}
-                <span className="text-xs font-normal text-blue-600 dark:text-blue-300">
+                <span className="text-xs font-sans font-normal text-blue-600 dark:text-[#8C93A4]">
                   {t("common.vph")}
                 </span>
               </>
             ) : (
-              <span className="text-base text-amber-600 dark:text-amber-400">Calibrating...</span>
+              <span className="text-base font-sans text-amber-600 dark:text-amber-400">Calibrating...</span>
             )}
           </p>
-          <div className="flex items-center justify-between mt-1 text-[11px] text-blue-700 dark:text-blue-300">
+          <div className="flex items-center justify-between mt-1 text-[11px] text-blue-700 dark:text-[#C5C8D0]">
             <span>{isHindi ? "गति:" : "Speed:"} <b>{prediction?.model_readiness === "ready" ? `${prediction.predicted_speed} km/h` : "N/A"}</b></span>
           </div>
-          <span className="text-[10px] text-blue-600 dark:text-blue-300 mt-1 inline-block">
+          <span className="text-[10px] text-blue-600 dark:text-[#8C93A4] mt-1 inline-block">
             {prediction?.uncertainty_lower_volume != null
               ? `${isHindi ? "अवशिष्ट सीमा (±1.96σ): " : "Residual (±1.96σ): "} ${prediction.uncertainty_lower_volume} - ${prediction.uncertainty_upper_volume}`
               : isHindi ? "सांख्यिकीय सीमा अनुपलब्ध" : "Empirical bounds unavailable"}
@@ -196,27 +194,27 @@ export const TrafficPrediction: React.FC = () => {
         </div>
 
         {/* Travel Time */}
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex items-center justify-between text-xs text-slate-500">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] shadow-sm">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-[#8C93A4]">
             <span>{isHindi ? "अनुमानित यात्रा समय" : "Est. Travel Time"}</span>
-            <Clock className="w-3.5 h-3.5 text-blue-500" />
+            <Clock className="w-3.5 h-3.5 text-blue-500 dark:text-[#9AC2FA]" />
           </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+          <p className="text-2xl font-serif font-semibold text-slate-900 dark:text-white mt-1 tabular-nums">
             {prediction?.estimated_travel_time_min ?? 5.5}{" "}
-            <span className="text-xs font-normal text-slate-500">{t("common.minutes")}</span>
+            <span className="text-xs font-sans font-normal text-slate-500 dark:text-[#8C93A4]">{t("common.minutes")}</span>
           </p>
-          <span className="text-[10px] text-slate-400 mt-1 inline-block">
+          <span className="text-[10px] text-slate-400 dark:text-[#6B7280] mt-1 inline-block">
             {isHindi ? "3.5 किमी कॉरिडोर दूरी" : "Across 3.5 km corridor segment"}
           </span>
         </div>
 
         {/* Expected Congestion Onset */}
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex items-center justify-between text-xs text-slate-500">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] shadow-sm">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-[#8C93A4]">
             <span>{isHindi ? "भीड़ शुरुआत" : "Expected Onset"}</span>
             <AlertCircle className={`w-3.5 h-3.5 ${prediction?.predicted_congestion_level === 'severe' ? 'text-red-500' : 'text-emerald-500'}`} />
           </div>
-          <p className="text-sm font-bold text-slate-900 dark:text-white mt-2 leading-tight">
+          <p className="text-sm font-semibold text-slate-900 dark:text-white mt-2 leading-tight">
             {prediction?.expected_congestion_onset || "Normal flow"}
           </p>
           <span className={`text-[10px] font-semibold mt-1 inline-block uppercase px-1.5 py-0.5 rounded ${
@@ -231,14 +229,14 @@ export const TrafficPrediction: React.FC = () => {
         </div>
 
         {/* MAE & RMSE with Baseline Benchmark */}
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex items-center justify-between text-xs text-slate-500">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] shadow-sm">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-[#8C93A4]">
             <span>{isHindi ? "टेस्ट त्रुटि (MAE/RMSE)" : "Test Error (MAE/RMSE)"}</span>
-            <span className="text-[9px] bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-bold uppercase text-blue-500">Held-out</span>
+            <span className="text-[9px] bg-slate-100 dark:bg-[#1B1D22] px-1.5 py-0.5 rounded font-bold uppercase text-blue-600 dark:text-[#9AC2FA]">Held-out</span>
           </div>
-          <p className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+          <p className="text-xl font-serif font-semibold text-slate-900 dark:text-white mt-1 tabular-nums">
             {prediction?.test_mae ?? "18.4"}{" "}
-            <span className="text-xs font-normal text-slate-400">/ {prediction?.test_rmse ?? "25.1"}</span>
+            <span className="text-xs font-sans font-normal text-slate-400 dark:text-[#8C93A4]">/ {prediction?.test_rmse ?? "25.1"}</span>
           </p>
           {prediction?.baseline_mae != null ? (
             <div className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 flex items-center justify-between">
@@ -246,43 +244,43 @@ export const TrafficPrediction: React.FC = () => {
               <span className="font-semibold">{prediction.model_improvement_pct != null ? `${prediction.model_improvement_pct > 0 ? "+" : ""}${prediction.model_improvement_pct}%` : ""}</span>
             </div>
           ) : (
-            <span className="text-[10px] text-slate-400 mt-1 inline-block">
+            <span className="text-[10px] text-slate-400 dark:text-[#6B7280] mt-1 inline-block">
               {isHindi ? "कालानुक्रमिक विभाजन परीक्षण" : "Chronological holdout split"}
             </span>
           )}
         </div>
 
         {/* Measured Latency */}
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex items-center justify-between text-xs text-slate-500">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] shadow-sm">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-[#8C93A4]">
             <span>{t("prediction.latency")}</span>
             <Zap className="w-3.5 h-3.5 text-amber-500" />
           </div>
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+          <p className="text-2xl font-serif font-semibold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">
             {prediction?.inference_latency_ms ?? "0.45"}{" "}
-            <span className="text-xs font-normal text-slate-500">{t("common.ms")}</span>
+            <span className="text-xs font-sans font-normal text-slate-500 dark:text-[#8C93A4]">{t("common.ms")}</span>
           </p>
-          <span className="text-[10px] text-slate-400 mt-1 inline-block">
+          <span className="text-[10px] text-slate-400 dark:text-[#6B7280] mt-1 inline-block">
             {isHindi ? "वास्तविक मापा गया निष्पादन" : "Live timer execution clock"}
           </span>
         </div>
       </div>
 
       {/* Main Chart: Timeline + Forecast with Confidence Interval */}
-      <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="p-5 rounded-2xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div>
-            <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+            <h3 className="font-serif font-semibold text-base text-slate-900 dark:text-white">
               {t("prediction.actual_vs_pred")}
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-[#8C93A4]">
               {isHindi ? `${selectedId} के लिए 15-मिनट समय-श्रृंखला और भविष्य का प्रक्षेपण` : `15-minute time series trajectory and forward projection for ${selectedId}`}
             </p>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500" />
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-[#8C93A4]">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#9AC2FA]" />
             <span>{isHindi ? "अवलोकित" : "Observed"}</span>
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 ml-2" />
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 ml-2" />
             <span>{isHindi ? `+${horizon}m पूर्वानुमान` : `+${horizon}m Forecast`}</span>
           </div>
         </div>
@@ -292,27 +290,19 @@ export const TrafficPrediction: React.FC = () => {
             <AreaChart data={prediction?.forecast_timeline || []}>
               <defs>
                 <linearGradient id="colorAct" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor={TFL_CHART_THEME.colors.primary} stopOpacity={0.35} />
+                  <stop offset="95%" stopColor={TFL_CHART_THEME.colors.primary} stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-              <XAxis dataKey="time" stroke="#94A3B8" fontSize={11} />
-              <YAxis stroke="#94A3B8" fontSize={11} unit=" v" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#0F172A",
-                  borderColor: "#334155",
-                  borderRadius: "0.5rem",
-                  color: "#F8FAFC",
-                  fontSize: "12px",
-                }}
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke={TFL_CHART_THEME.gridStroke} />
+              <XAxis dataKey="time" stroke={TFL_CHART_THEME.axisStroke} fontSize={11} />
+              <YAxis stroke={TFL_CHART_THEME.axisStroke} fontSize={11} unit=" v" />
+              <Tooltip contentStyle={TFL_CHART_THEME.tooltipStyle} />
               <Area
                 type="monotone"
                 dataKey="actual"
                 name={isHindi ? "अवलोकित ट्रैफिक" : "Observed Traffic"}
-                stroke="#3B82F6"
+                stroke={TFL_CHART_THEME.colors.primary}
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#colorAct)"
@@ -322,30 +312,30 @@ export const TrafficPrediction: React.FC = () => {
                 type="monotone"
                 dataKey="predicted"
                 name={isHindi ? "AI पूर्वानुमान" : "AI Forecast"}
-                stroke="#10B981"
-                strokeWidth={3}
-                fill="#10B981"
-                fillOpacity={0.2}
-                dot={{ r: 6, fill: "#10B981" }}
+                stroke={TFL_CHART_THEME.colors.emerald}
+                strokeWidth={2.5}
+                fill={TFL_CHART_THEME.colors.emerald}
+                fillOpacity={0.18}
+                dot={{ r: 5, fill: TFL_CHART_THEME.colors.emerald }}
               />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        <p className="mt-3 text-[11px] text-slate-400 italic">
+        <p className="mt-3 text-[11px] text-slate-400 dark:text-[#6B7280] italic">
           {t("prediction.uncertainty_note")}
         </p>
       </div>
 
       {/* Feature Attribution / Explainability Panel */}
-      <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="p-5 rounded-2xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] shadow-sm">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-amber-500" />
-          <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+          <Sparkles className="w-4 h-4 text-[#9AC2FA]" />
+          <h3 className="font-serif font-semibold text-base text-slate-900 dark:text-white">
             {t("prediction.feature_title")}
           </h3>
         </div>
-        <p className="text-xs text-slate-500 mb-4">
+        <p className="text-xs text-slate-500 dark:text-[#8C93A4] mb-4">
           {isHindi
             ? "मॉडल द्वारा पूर्वानुमान में उपयोग किए गए मुख्य कारकों का प्रभाव (Ridge Regression कोएफिशिएंट्स × इनपुट मान):"
             : "Relative influence of input signals on the predicted traffic volume (Ridge regression coefficient × normalized feature):"}
@@ -355,7 +345,7 @@ export const TrafficPrediction: React.FC = () => {
           {prediction?.feature_explanations.map((f, idx) => (
             <div
               key={idx}
-              className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-xs"
+              className="p-3 rounded-xl bg-slate-50 dark:bg-[#161920] border border-slate-100 dark:border-white/[0.08] flex items-center justify-between text-xs"
             >
               <div>
                 <p className="font-semibold text-slate-800 dark:text-slate-200">

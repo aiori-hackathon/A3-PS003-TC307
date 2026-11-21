@@ -17,6 +17,7 @@ import {
   Activity,
   Layers,
 } from "lucide-react";
+import { PageHeroHeader } from "../components/common/DesignSystem";
 
 export const TrafficDigitalTwin: React.FC = () => {
   const { t } = useTranslation();
@@ -80,19 +81,11 @@ export const TrafficDigitalTwin: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Title */}
-      <div className="pb-2 border-b border-slate-200 dark:border-slate-800">
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-            {t("digital_twin.title")}
-          </h1>
-          <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-            Delhi NCR Network Twin
-          </span>
-        </div>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          {t("digital_twin.subtitle")}
-        </p>
-      </div>
+      <PageHeroHeader
+        eyebrow="Delhi NCR Network Twin"
+        title={t("digital_twin.title")}
+        subtitle={t("digital_twin.subtitle")}
+      />
 
       {/* 4 Focused Scenario Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -103,30 +96,30 @@ export const TrafficDigitalTwin: React.FC = () => {
             <button
               key={sc.id}
               onClick={() => setSelectedScenario(sc.id)}
-              className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between ${
+              className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
                 isSelected
-                  ? "bg-blue-50 dark:bg-blue-950/40 border-blue-500 shadow-md ring-2 ring-blue-500/20"
-                  : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300"
+                  ? "bg-blue-50 dark:bg-[#161920] border-blue-500 dark:border-[#9AC2FA]/60 shadow-sm ring-1 ring-blue-500/20 dark:ring-[#9AC2FA]/20"
+                  : "bg-white dark:bg-[#111318] border-slate-200 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/[0.16]"
               }`}
             >
               <div className="flex items-center gap-3">
                 <div
                   className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                     isSelected
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                      ? "bg-blue-600 text-white dark:bg-[#9AC2FA] dark:text-[#0A0D14] shadow-xs"
+                      : "bg-slate-100 dark:bg-[#1B1D22] text-slate-600 dark:text-[#8C93A4]"
                   }`}
                 >
                   <Icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                  <h4 className="font-serif font-semibold text-sm text-slate-900 dark:text-white">
                     {sc.title}
                   </h4>
-                  <span className="text-[10px] text-slate-400">Software Scenario</span>
+                  <span className="text-[10px] text-slate-400 dark:text-[#8C93A4]">Software Scenario</span>
                 </div>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
+              <p className="text-[11px] text-slate-500 dark:text-[#8C93A4] mt-3 leading-relaxed">
                 {sc.desc}
               </p>
             </button>
@@ -135,8 +128,8 @@ export const TrafficDigitalTwin: React.FC = () => {
       </div>
 
       {/* Scenario Parameter Sliders & Action Panel */}
-      <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-        <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+      <div className="p-5 rounded-2xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-4">
+        <h3 className="font-serif font-semibold text-base text-slate-900 dark:text-white">
           {isHindi ? "सिमुलेशन पैरामीटर विन्यास" : "Configure Simulation Parameters"}
         </h3>
 
@@ -144,10 +137,10 @@ export const TrafficDigitalTwin: React.FC = () => {
           {selectedScenario === "increased_volume" && (
             <div className="space-y-2 md:col-span-2">
               <div className="flex justify-between text-xs">
-                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                <span className="font-semibold text-slate-700 dark:text-[#C5C8D0]">
                   {isHindi ? "वॉल्यूम मल्टीप्लायर:" : "Volume Multiplier:"}
                 </span>
-                <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                <span className="font-mono font-bold text-blue-600 dark:text-[#9AC2FA]">
                   {volMultiplier.toFixed(2)}x (+{Math.round((volMultiplier - 1.0) * 100)}%)
                 </span>
               </div>
@@ -158,9 +151,9 @@ export const TrafficDigitalTwin: React.FC = () => {
                 step="0.05"
                 value={volMultiplier}
                 onChange={(e) => setVolMultiplier(parseFloat(e.target.value))}
-                className="w-full accent-blue-600 cursor-pointer"
+                className="w-full accent-[#9AC2FA] cursor-pointer"
               />
-              <span className="text-[10px] text-slate-400 block">
+              <span className="text-[10px] text-slate-400 dark:text-[#6B7280] block">
                 Range: 1.05x to 2.0x volume increase across arterial network.
               </span>
             </div>
@@ -168,13 +161,13 @@ export const TrafficDigitalTwin: React.FC = () => {
 
           {selectedScenario === "road_closure" && (
             <div className="space-y-2 md:col-span-2">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
+              <label className="text-xs font-semibold text-slate-700 dark:text-[#C5C8D0] block">
                 {isHindi ? "बंद किया जाने वाला जंक्शन:" : "Target Closed Intersection:"}
               </label>
               <select
                 value={targetNode}
                 onChange={(e) => setTargetNode(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-medium rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs font-medium rounded-xl bg-slate-100 dark:bg-[#1B1D22] border border-slate-200 dark:border-white/[0.10] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:focus:ring-[#9AC2FA]/40"
               >
                 <option value="INT-04">INT-04 (Ring Road Arterial Junction)</option>
                 <option value="INT-02">INT-02 (Barakhamba Road Crossing)</option>
@@ -241,9 +234,9 @@ export const TrafficDigitalTwin: React.FC = () => {
             <button
               onClick={() => handleApplyScenario(selectedScenario)}
               disabled={loading}
-              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-[#9AC2FA] dark:hover:bg-[#7FB0F7] text-white dark:text-[#0A0D14] font-semibold text-xs sm:text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <Play className="w-4 h-4 fill-white" />
+              <Play className="w-4 h-4 fill-current" />
               <span>{loading ? "Simulating..." : isHindi ? "सिमुलेशन चलाएं" : "Run Simulation"}</span>
             </button>
           </div>
@@ -252,17 +245,17 @@ export const TrafficDigitalTwin: React.FC = () => {
 
       {/* Simulation Feedback Alert */}
       {simResult && (
-        <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 flex items-start gap-3 text-xs text-blue-900 dark:text-blue-200">
-          <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-xl bg-blue-50 dark:bg-[#111318] border border-blue-200 dark:border-[#9AC2FA]/30 flex items-start gap-3 text-xs text-blue-900 dark:text-[#E8EAEE]">
+          <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-[#9AC2FA] shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <span className="font-bold text-sm block">
+            <span className="font-serif font-semibold text-sm block text-slate-900 dark:text-white">
               {t("digital_twin.simulation_impact")}
             </span>
-            <p className="leading-relaxed">
+            <p className="leading-relaxed dark:text-[#C5C8D0]">
               {isHindi ? simResult.message_hi : simResult.message_en}
             </p>
             {simResult.affected_nodes?.length > 0 && (
-              <p className="text-[11px] text-blue-600 dark:text-blue-400 font-mono mt-1">
+              <p className="text-[11px] text-blue-600 dark:text-[#9AC2FA] font-mono mt-1">
                 Affected nodes: {simResult.affected_nodes.join(", ")}
               </p>
             )}
@@ -273,13 +266,13 @@ export const TrafficDigitalTwin: React.FC = () => {
       {/* Baseline vs. Simulated Comparative KPI Row */}
       {simResult?.baseline_metrics && simResult?.simulated_metrics && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-            <span className="text-xs text-slate-500 uppercase font-semibold">Average Network Speed</span>
+          <div className="p-4 rounded-xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] shadow-sm">
+            <span className="text-[11px] text-slate-500 dark:text-[#8C93A4] uppercase font-semibold tracking-wider">Average Network Speed</span>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-bold text-slate-900 dark:text-white">
+              <span className="text-2xl font-serif font-semibold text-slate-900 dark:text-white tabular-nums">
                 {simResult.simulated_metrics.average_network_speed} km/h
               </span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-400 dark:text-[#8C93A4]">
                 (Baseline: {simResult.baseline_metrics.average_network_speed} km/h)
               </span>
             </div>
@@ -294,32 +287,32 @@ export const TrafficDigitalTwin: React.FC = () => {
             </span>
           </div>
 
-          <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-            <span className="text-xs text-slate-500 uppercase font-semibold">Total Network Volume</span>
+          <div className="p-4 rounded-xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] shadow-sm">
+            <span className="text-[11px] text-slate-500 dark:text-[#8C93A4] uppercase font-semibold tracking-wider">Total Network Volume</span>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-bold text-slate-900 dark:text-white">
+              <span className="text-2xl font-serif font-semibold text-slate-900 dark:text-white tabular-nums">
                 {simResult.simulated_metrics.total_network_volume} vph
               </span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-400 dark:text-[#8C93A4]">
                 (Baseline: {simResult.baseline_metrics.total_network_volume})
               </span>
             </div>
-            <span className="text-[10px] text-blue-500 font-semibold mt-1 inline-block">
+            <span className="text-[10px] text-blue-600 dark:text-[#9AC2FA] font-semibold mt-1 inline-block">
               Across all 8 monitored arterial intersections
             </span>
           </div>
 
-          <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-            <span className="text-xs text-slate-500 uppercase font-semibold">Congested Intersections</span>
+          <div className="p-4 rounded-xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] shadow-sm">
+            <span className="text-[11px] text-slate-500 dark:text-[#8C93A4] uppercase font-semibold tracking-wider">Congested Intersections</span>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-bold text-red-600 dark:text-red-400">
+              <span className="text-2xl font-serif font-semibold text-rose-600 dark:text-rose-400 tabular-nums">
                 {simResult.simulated_metrics.congested_intersections} / 8
               </span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-400 dark:text-[#8C93A4]">
                 (Baseline: {simResult.baseline_metrics.congested_intersections})
               </span>
             </div>
-            <span className="text-[10px] text-slate-400 mt-1 inline-block">
+            <span className="text-[10px] text-slate-400 dark:text-[#6B7280] mt-1 inline-block">
               Threshold: &gt;75% volume/capacity ratio
             </span>
           </div>
@@ -328,13 +321,13 @@ export const TrafficDigitalTwin: React.FC = () => {
 
       {/* Comparative Impact Table */}
       {simResult?.node_comparisons && (
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-          <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-3">
+          <h3 className="font-serif font-semibold text-base text-slate-900 dark:text-white">
             {isHindi ? "नोड-वार बेसलाइन बनाम सिमुलेटेड प्रभाव तुलना" : "Node-Level Baseline vs. Simulated Impact Matrix"}
           </h3>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase text-[10px] border-b border-slate-200 dark:border-slate-700">
+              <thead className="bg-slate-50 dark:bg-[#161920] text-slate-500 dark:text-[#8C93A4] uppercase text-[10px] border-b border-slate-200 dark:border-white/[0.08]">
                 <tr>
                   <th className="px-3 py-2">Intersection</th>
                   <th className="px-3 py-2">Baseline Volume</th>
@@ -344,9 +337,9 @@ export const TrafficDigitalTwin: React.FC = () => {
                   <th className="px-3 py-2">Congestion State</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/[0.06]">
                 {simResult.node_comparisons.map((node: any) => (
-                  <tr key={node.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                  <tr key={node.id} className="hover:bg-slate-50/50 dark:hover:bg-[#161920] transition-colors">
                     <td className="px-3 py-2 font-semibold text-slate-900 dark:text-white">
                       {node.name} <span className="font-mono text-slate-400 text-[10px]">({node.id})</span>
                     </td>

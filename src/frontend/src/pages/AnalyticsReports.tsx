@@ -6,11 +6,6 @@ import { OptimizerExperimentResult } from "../types";
 import {
   BarChart3,
   Download,
-  Calendar,
-  Layers,
-  Zap,
-  CheckCircle2,
-  Clock,
   TrendingDown,
   Activity,
   FileSpreadsheet,
@@ -19,7 +14,6 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  LineChart,
   Line,
   XAxis,
   YAxis,
@@ -27,6 +21,8 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { PageHeroHeader, TFL_CHART_THEME } from "../components/common/DesignSystem";
+import { SectionTabs } from "../components/common/SectionTabs";
 
 export const AnalyticsReports: React.FC = () => {
   const { t } = useTranslation();
@@ -34,6 +30,7 @@ export const AnalyticsReports: React.FC = () => {
 
   const [experiments, setExperiments] = useState<OptimizerExperimentResult[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [activeTab, setActiveTab] = useState<"trends" | "experiments">("trends");
 
   useEffect(() => {
     api
@@ -58,35 +55,67 @@ export const AnalyticsReports: React.FC = () => {
     { time: "22:00", volume: 210, speed: 50 },
   ];
 
-  return (
-    <div className="space-y-6">
-      {/* Title & Export Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-            {t("analytics.title")}
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {t("analytics.subtitle")}
-          </p>
-        </div>
+  const bestSavings = experiments.length > 0 ? Math.max(...experiments.map((e) => e.savings_pct || 0)) : null;
+  const bestMae = experiments.length > 0 ? Math.min(...experiments.map((e) => e.mae || Infinity)) : null;
 
-        <button
-          onClick={handleExportCsv}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm shadow-md transition-all shrink-0 self-start sm:self-auto"
-        >
-          <Download className="w-4 h-4" />
-          <span>{t("analytics.export_btn")}</span>
-        </button>
+  return (
+    <div className="space-y-5">
+      {/* Title & Export Button */}
+      <PageHeroHeader
+        eyebrow="Operational Benchmarks"
+        title={t("analytics.title")}
+        subtitle={t("analytics.subtitle")}
+        actions={
+          <button
+            onClick={handleExportCsv}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-[#9AC2FA] dark:hover:bg-[#7FB0F7] text-white dark:text-[#0A0D14] font-semibold text-xs sm:text-sm shadow-sm transition-all shrink-0 cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            <span>{t("analytics.export_btn")}</span>
+          </button>
+        }
+      />
+
+      {/* Compact Analytical Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08]">
+          <span className="text-[11px] text-slate-500 dark:text-[#8C93A4] block">Logged Experiments</span>
+          <span className="font-serif text-2xl font-medium text-slate-900 dark:text-white mt-1 block">
+            {loading ? "--" : experiments.length}
+          </span>
+        </div>
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08]">
+          <span className="text-[11px] text-slate-500 dark:text-[#8C93A4] block">Peak Bandwidth Savings</span>
+          <span className="font-serif text-2xl font-medium text-emerald-600 dark:text-emerald-400 mt-1 block">
+            {bestSavings !== null && Number.isFinite(bestSavings) ? `${bestSavings}%` : "--"}
+          </span>
+        </div>
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08]">
+          <span className="text-[11px] text-slate-500 dark:text-[#8C93A4] block">Lowest Measured Test MAE</span>
+          <span className="font-serif text-2xl font-medium text-blue-600 dark:text-[#9AC2FA] mt-1 block">
+            {bestMae !== null && Number.isFinite(bestMae) ? bestMae.toFixed(2) : "--"}
+          </span>
+        </div>
       </div>
 
-      {/* Row 1: Diurnal Peak Hour Analysis Chart */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+      <SectionTabs
+        activeTab={activeTab}
+        onChange={(id) => setActiveTab(id as "trends" | "experiments")}
+        testIdPrefix="analytics-reports-tab"
+        tabs={[
+          { id: "trends", label: "Diurnal Traffic & Congestion Trends", icon: Activity },
+          { id: "experiments", label: "Optimizer Benchmark Logs", icon: TrendingDown, badge: experiments.length },
+        ]}
+      />
+
+      {/* Tab 1: Diurnal Peak Hour Analysis Chart */}
+      {activeTab === "trends" && (
+      <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-4">
         <div>
-          <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+          <h3 className="font-serif font-semibold text-base text-slate-900 dark:text-white">
             {isHindi ? "दैनिक पीक-ऑवर ट्रैफिक और गति प्रोफाइल" : "Diurnal Peak Hour Congestion vs Speed Trends"}
           </h3>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-[#8C93A4] mt-0.5">
             {isHindi ? "सुबह और शाम के रश-ऑवर में वाहन वॉल्यूम और गति में व्युत्क्रमानुपाती संबंध" : "Observed inverse relation between vehicle volume and travel speed during morning/evening commute"}
           </p>
         </div>
@@ -94,25 +123,17 @@ export const AnalyticsReports: React.FC = () => {
         <div className="h-64 sm:h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={peakHourData}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-              <XAxis dataKey="time" stroke="#94A3B8" fontSize={11} />
-              <YAxis yAxisId="left" stroke="#3B82F6" fontSize={11} unit=" v" />
-              <YAxis yAxisId="right" orientation="right" stroke="#10B981" fontSize={11} unit=" km/h" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#0F172A",
-                  borderColor: "#334155",
-                  borderRadius: "0.5rem",
-                  color: "#F8FAFC",
-                  fontSize: "12px",
-                }}
-              />
-              <Legend wrapperStyle={{ fontSize: "12px" }} />
+              <CartesianGrid strokeDasharray="3 3" stroke={TFL_CHART_THEME.gridStroke} />
+              <XAxis dataKey="time" stroke={TFL_CHART_THEME.axisStroke} fontSize={11} />
+              <YAxis yAxisId="left" stroke={TFL_CHART_THEME.colors.primary} fontSize={11} unit=" v" />
+              <YAxis yAxisId="right" orientation="right" stroke={TFL_CHART_THEME.colors.emerald} fontSize={11} unit=" km/h" />
+              <Tooltip contentStyle={TFL_CHART_THEME.tooltipStyle} />
+              <Legend wrapperStyle={{ fontSize: "12px", color: "#C5C8D0" }} />
               <Bar
                 yAxisId="left"
                 dataKey="volume"
                 name={isHindi ? "ट्रैफिक वॉल्यूम (वाहन/15मि)" : "Traffic Volume (veh/15m)"}
-                fill="#3B82F6"
+                fill={TFL_CHART_THEME.colors.secondary}
                 radius={[4, 4, 0, 0]}
               />
               <Line
@@ -120,28 +141,30 @@ export const AnalyticsReports: React.FC = () => {
                 type="monotone"
                 dataKey="speed"
                 name={isHindi ? "औसत गति (किमी/घंटा)" : "Average Speed (km/h)"}
-                stroke="#10B981"
-                strokeWidth={3}
+                stroke={TFL_CHART_THEME.colors.emerald}
+                strokeWidth={2.5}
               />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
+      )}
 
-      {/* Row 2: Experiment History Table with Download */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+      {/* Tab 2: Experiment History Table with Download */}
+      {activeTab === "experiments" && (
+      <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#111318] border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+            <h3 className="font-serif font-semibold text-base text-slate-900 dark:text-white">
               {t("analytics.exp_history_title")}
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-[#8C93A4] mt-0.5">
               {isHindi ? "सभी पूर्ण प्रयोगों का कालानुक्रमिक माप रिकॉर्ड" : "Measured transmission logs and error benchmarks across evaluated parameter sets"}
             </p>
           </div>
           <button
             onClick={handleExportCsv}
-            className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline self-start sm:self-auto"
+            className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-[#9AC2FA] hover:underline self-start sm:self-auto cursor-pointer"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
             <span>Download CSV (trafficfl_experiments_report.csv)</span>
@@ -151,7 +174,7 @@ export const AnalyticsReports: React.FC = () => {
         <div className="overflow-x-auto no-scrollbar">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400">
+              <tr className="border-b border-slate-200 dark:border-white/[0.08] text-slate-500 dark:text-[#8C93A4] text-[10px] uppercase tracking-[0.06em]">
                 <th className="py-2.5 px-3">ID</th>
                 <th className="py-2.5 px-3">Configuration Name</th>
                 <th className="py-2.5 px-3">Top-K Retention</th>
@@ -164,10 +187,10 @@ export const AnalyticsReports: React.FC = () => {
                 <th className="py-2.5 px-3">RMSE</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-slate-100 dark:divide-white/[0.06] text-slate-700 dark:text-[#C5C8D0]">
               {experiments.map((e) => (
-                <tr key={e.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                  <td className="py-2.5 px-3 font-mono text-slate-400">#{e.id}</td>
+                <tr key={e.id} className="hover:bg-slate-50 dark:hover:bg-[#161920] transition-colors">
+                  <td className="py-2.5 px-3 font-mono text-slate-400 dark:text-[#6B7280]">#{e.id}</td>
                   <td className="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">
                     {e.name}
                   </td>
@@ -187,6 +210,7 @@ export const AnalyticsReports: React.FC = () => {
           </table>
         </div>
       </div>
+      )}
     </div>
   );
 };

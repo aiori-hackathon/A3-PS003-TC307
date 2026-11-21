@@ -26,6 +26,10 @@ class IntersectionDetail(IntersectionBase):
     is_simulated: bool = True
     data_freshness: str = "Recent (< 15 min)"
     last_updated: Optional[str] = None
+    free_flow_speed: Optional[float] = None
+    delay_seconds: Optional[float] = None
+    queue_length: Optional[int] = None
+    confidence_score: Optional[float] = None
 
 
 class CorridorDetail(BaseModel):
@@ -192,13 +196,72 @@ class ClientStatus(BaseModel):
     cumulative_bytes: Optional[int] = None
 
 
+def _validate_compression_method(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    supported = ("full_precision", "top_k", "int8", "top_k_int8")
+    if value not in supported:
+        raise ValueError(
+            f"Unsupported compression_method '{value}'. Supported values are {list(supported)}."
+        )
+    return value
+
+
 class BenchmarkCompareRequest(BaseModel):
-    dataset_type: str = Field(default="synthetic", pattern="^(synthetic|pems08|live)$")
-    target_horizon_minutes: int = Field(default=30, ge=15, le=1440)
+    dataset_type: str = Field(default="synthetic", pattern="^(synthetic|pems08|pems08_public|live)$")
+    target_horizon_minutes: int = Field(default=30, ge=5, le=1440)
     federated_rounds: int = Field(default=3, ge=1, le=10)
     apply_compression: bool = False
-    top_k_retention_pct: float = Field(default=100.0, ge=10.0, le=100.0)
+    top_k_retention_pct: float = Field(default=100.0, gt=0.0, le=100.0)
     int8_quantization: bool = False
+    compression_method: Optional[str] = None
+    partition_strategy: str = Field(default="non_iid")
+    random_seed: int = Field(default=42, ge=0, le=2_147_483_647)
+
+    @field_validator("partition_strategy")
+    @classmethod
+    def check_partition_strategy(cls, value: str) -> str:
+        if value not in ("iid", "non_iid"):
+            raise ValueError(
+                f"Unsupported partition_strategy '{value}'. Supported values are 'iid' or 'non_iid'."
+            )
+        return value
+
+    @field_validator("compression_method")
+    @classmethod
+    def check_compression_method(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_compression_method(value)
+
+
+class PartitionComparisonRequest(BaseModel):
+    dataset_type: str = Field(default="pems08_public", pattern="^(synthetic|pems08|pems08_public|live)$")
+    target_horizon_minutes: int = Field(default=15, ge=5, le=1440)
+    federated_rounds: int = Field(default=5, ge=1, le=10)
+    apply_compression: bool = False
+    top_k_retention_pct: float = Field(default=100.0, gt=0.0, le=100.0)
+    int8_quantization: bool = False
+    compression_method: Optional[str] = None
+    random_seed: int = Field(default=42, ge=0, le=2_147_483_647)
+
+    @field_validator("compression_method")
+    @classmethod
+    def check_compression_method(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_compression_method(value)
+
+
+class ClientDistributionStat(BaseModel):
+    client_id: str
+    label: str
+    partition_strategy: str
+    sensors_count: int
+    train_samples: int
+    sample_share_pct: float
+    flow_mean: float
+    flow_std: float
+    flow_unit: str
+    occupancy_mean: Optional[float] = None
+    speed_mean: Optional[float] = None
+    speed_unit: Optional[str] = None
 
 
 class BenchmarkApproachResult(BaseModel):
@@ -214,9 +277,12 @@ class BenchmarkApproachResult(BaseModel):
     data_transmitted_formatted: str
     upload_bytes: int
     download_bytes: int
+    download_bytes_modeled: Optional[int] = None
     participating_clients: int
     training_duration_ms: float
     round_history: Optional[List[Dict[str, Any]]] = None
+    communication_summary: Optional[Dict[str, Any]] = None
+    centralized_accounting: Optional[Dict[str, Any]] = None
 
 
 class BenchmarkDeltaComparison(BaseModel):
@@ -233,16 +299,349 @@ class BenchmarkDeltaComparison(BaseModel):
 class BenchmarkCompareResponse(BaseModel):
     benchmark_id: str
     executed_at: str
+    dataset_id: Optional[str] = None
     dataset_name: str
     dataset_provenance: str
+    is_simulated: bool = False
+    is_genuine_public: bool = False
+    data_type_label: str = "Synthetic"
+    dataset_license: Optional[str] = None
+    source_url: Optional[str] = None
+    documentation_url: Optional[str] = None
+    sensors_count: Optional[int] = None
+    sampling_interval: Optional[str] = None
+    time_range: Optional[str] = None
+    target_unit: str = "veh/15m"
     prediction_target: str
     target_horizon_minutes: int
+    partition_strategy: str = "non_iid"
+    random_seed: int = 42
+    training_config: Optional[Dict[str, Any]] = None
     accounting_type: Optional[str] = None
+    client_summary: Optional[List[Dict[str, Any]]] = None
+    client_statistics: Optional[List[ClientDistributionStat]] = None
+    distribution_analysis: Optional[Dict[str, Any]] = None
     centralized: BenchmarkApproachResult
     federated: BenchmarkApproachResult
     delta: BenchmarkDeltaComparison
     assumptions: List[str]
     methodology: str
+
+
+class PartitionStrategyResult(BaseModel):
+    partition_strategy: str
+    federated: BenchmarkApproachResult
+    delta: BenchmarkDeltaComparison
+    client_statistics: List[ClientDistributionStat]
+    distribution_analysis: Dict[str, Any]
+    client_summary: List[Dict[str, Any]]
+
+
+class PartitionComparisonResponse(BaseModel):
+    experiment_id: str
+    executed_at: str
+    dataset_id: str
+    dataset_name: str
+    dataset_provenance: str
+    is_simulated: bool = False
+    is_genuine_public: bool = False
+    data_type_label: str = "Public"
+    dataset_license: Optional[str] = None
+    source_url: Optional[str] = None
+    documentation_url: Optional[str] = None
+    sensors_count: Optional[int] = None
+    sampling_interval: Optional[str] = None
+    time_range: Optional[str] = None
+    target_unit: str = "veh/5m"
+    prediction_target: str
+    target_horizon_minutes: int
+    random_seed: int
+    shared_config: Dict[str, Any]
+    centralized: BenchmarkApproachResult
+    iid: PartitionStrategyResult
+    non_iid: PartitionStrategyResult
+    comparison_summary: Dict[str, Any]
+
+
+class MultiSeedBenchmarkRequest(BaseModel):
+    dataset_type: str = Field(default="pems08_public", pattern="^(synthetic|pems08|pems08_public|live)$")
+    target_horizon_minutes: int = Field(default=15, ge=5, le=1440)
+    federated_rounds: int = Field(default=5, ge=1, le=10)
+    apply_compression: bool = False
+    top_k_retention_pct: float = Field(default=100.0, gt=0.0, le=100.0)
+    int8_quantization: bool = False
+    compression_method: Optional[str] = None
+    seeds: List[int] = Field(default_factory=lambda: [42, 123, 2026])
+    partition_strategies: List[str] = Field(default_factory=lambda: ["iid", "non_iid"])
+
+    @field_validator("compression_method")
+    @classmethod
+    def check_compression_method(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_compression_method(value)
+
+    @field_validator("seeds", mode="before")
+    @classmethod
+    def check_seeds(cls, value: Any) -> List[int]:
+        if not isinstance(value, list) or not value:
+            raise ValueError("seeds must be a non-empty list of distinct non-negative integers (default [42, 123, 2026]).")
+        if len(value) > 10:
+            raise ValueError("seeds cannot exceed 10 runs per experiment request.")
+        validated: List[int] = []
+        seen = set()
+        for item in value:
+            if isinstance(item, bool) or not isinstance(item, int):
+                raise ValueError(f"Invalid seed '{item}'. All seeds must be strict integers (not booleans, floats, or strings).")
+            if item < 0 or item > 2_147_483_647:
+                raise ValueError(f"Seed {item} is out of valid bounds [0, 2147483647].")
+            if item in seen:
+                raise ValueError(f"Duplicate seed {item} is not allowed; each run requires a distinct seed.")
+            seen.add(item)
+            validated.append(item)
+        return validated
+
+    @field_validator("partition_strategies")
+    @classmethod
+    def check_partition_strategies(cls, value: List[str]) -> List[str]:
+        if not value:
+            raise ValueError("partition_strategies must contain at least one strategy ('iid' or 'non_iid').")
+        validated: List[str] = []
+        for s in value:
+            if s not in ("iid", "non_iid"):
+                raise ValueError(f"Unsupported partition_strategy '{s}'. Supported values are 'iid' or 'non_iid'.")
+            if s not in validated:
+                validated.append(s)
+        return validated
+
+
+class SeedFailureDetail(BaseModel):
+    seed: int
+    group: str
+    error: str
+
+
+class SeedIndividualResult(BaseModel):
+    seed: int
+    status: str
+    error: Optional[str] = None
+    train_samples_count: Optional[int] = None
+    test_samples_count: Optional[int] = None
+    mae: Optional[float] = None
+    rmse: Optional[float] = None
+    final_round_mae: Optional[float] = None
+    final_round_rmse: Optional[float] = None
+    data_transmitted_bytes: Optional[int] = None
+    data_transmitted_formatted: Optional[str] = None
+    upload_bytes: Optional[int] = None
+    download_bytes_modeled: Optional[int] = None
+    compression_method: Optional[str] = None
+    upload_compression_ratio: Optional[float] = None
+    upload_reduction_pct: Optional[float] = None
+    bidirectional_compression_ratio: Optional[float] = None
+    bidirectional_reduction_pct: Optional[float] = None
+    mae_improvement_per_mb_upload: Optional[float] = None
+    rmse_improvement_per_mb_upload: Optional[float] = None
+    mae_improvement_per_mb_total: Optional[float] = None
+    rmse_improvement_per_mb_total: Optional[float] = None
+    communication_summary: Optional[Dict[str, Any]] = None
+    training_duration_ms: Optional[float] = None
+    round_history: List[Dict[str, Any]] = Field(default_factory=list)
+    distribution_heterogeneity_cv_pct: Optional[float] = None
+    distribution_flow_mean_range: Optional[float] = None
+
+
+class AggregatedRoundMetric(BaseModel):
+    round: int
+    completed_seeds_count: int
+    compression_method: Optional[str] = None
+    mean_mae: Optional[float] = None
+    std_mae: Optional[float] = None
+    min_mae: Optional[float] = None
+    max_mae: Optional[float] = None
+    mean_rmse: Optional[float] = None
+    std_rmse: Optional[float] = None
+    min_rmse: Optional[float] = None
+    max_rmse: Optional[float] = None
+    mean_upload_bytes: Optional[float] = None
+    std_upload_bytes: Optional[float] = None
+    mean_download_bytes_modeled: Optional[float] = None
+    std_download_bytes_modeled: Optional[float] = None
+    mean_total_round_bytes: Optional[float] = None
+    std_total_round_bytes: Optional[float] = None
+    mean_cumulative_upload_bytes: Optional[float] = None
+    std_cumulative_upload_bytes: Optional[float] = None
+    mean_cumulative_download_bytes_modeled: Optional[float] = None
+    std_cumulative_download_bytes_modeled: Optional[float] = None
+    mean_cumulative_total_bytes: Optional[float] = None
+    std_cumulative_total_bytes: Optional[float] = None
+    mean_cumulative_upload_mb: Optional[float] = None
+    mean_cumulative_download_mb_modeled: Optional[float] = None
+    mean_cumulative_total_mb: Optional[float] = None
+    mean_upload_compression_ratio: Optional[float] = None
+    mean_upload_reduction_pct: Optional[float] = None
+    mean_bidirectional_compression_ratio: Optional[float] = None
+    mean_bidirectional_reduction_pct: Optional[float] = None
+    mean_mae_improvement_per_mb_upload: Optional[float] = None
+    std_mae_improvement_per_mb_upload: Optional[float] = None
+    mean_rmse_improvement_per_mb_upload: Optional[float] = None
+    std_rmse_improvement_per_mb_upload: Optional[float] = None
+    mean_mae_improvement_per_mb_total: Optional[float] = None
+    mean_rmse_improvement_per_mb_total: Optional[float] = None
+
+
+class MultiSeedGroupSummary(BaseModel):
+    sample_count: int
+    std_formula: str
+    compression_method: Optional[str] = None
+    mean_mae: Optional[float] = None
+    std_mae: Optional[float] = None
+    mean_rmse: Optional[float] = None
+    std_rmse: Optional[float] = None
+    mean_final_round_mae: Optional[float] = None
+    std_final_round_mae: Optional[float] = None
+    mean_final_round_rmse: Optional[float] = None
+    std_final_round_rmse: Optional[float] = None
+    mean_data_transmitted_bytes: Optional[float] = None
+    std_data_transmitted_bytes: Optional[float] = None
+    mean_upload_bytes: Optional[float] = None
+    std_upload_bytes: Optional[float] = None
+    mean_download_bytes_modeled: Optional[float] = None
+    std_download_bytes_modeled: Optional[float] = None
+    mean_upload_compression_ratio: Optional[float] = None
+    mean_upload_reduction_pct: Optional[float] = None
+    mean_bidirectional_compression_ratio: Optional[float] = None
+    mean_bidirectional_reduction_pct: Optional[float] = None
+    mean_mae_improvement_per_mb_upload: Optional[float] = None
+    std_mae_improvement_per_mb_upload: Optional[float] = None
+    mean_rmse_improvement_per_mb_upload: Optional[float] = None
+    std_rmse_improvement_per_mb_upload: Optional[float] = None
+    mean_mae_improvement_per_mb_total: Optional[float] = None
+    mean_rmse_improvement_per_mb_total: Optional[float] = None
+    mean_duration_ms: Optional[float] = None
+
+
+class MultiSeedGroupResult(BaseModel):
+    group_name: str
+    partition_strategy: str
+    aggregate_status: str
+    is_complete: bool
+    requested_runs_count: int
+    successful_runs_count: int
+    failed_runs_count: int
+    successful_seeds: List[int]
+    failed_seeds: List[SeedFailureDetail]
+    status_note: str
+    summary: MultiSeedGroupSummary
+    per_seed_results: List[SeedIndividualResult]
+    aggregated_convergence: List[AggregatedRoundMetric]
+
+
+class MultiSeedBenchmarkResponse(BaseModel):
+    experiment_id: str
+    executed_at: str
+    dataset_id: str
+    dataset_name: str
+    dataset_provenance: str
+    is_simulated: bool = False
+    is_genuine_public: bool = False
+    data_type_label: str = "Public"
+    dataset_license: Optional[str] = None
+    source_url: Optional[str] = None
+    documentation_url: Optional[str] = None
+    sensors_count: Optional[int] = None
+    sampling_interval: Optional[str] = None
+    time_range: Optional[str] = None
+    target_unit: str = "veh/5m"
+    prediction_target: str
+    target_horizon_minutes: int
+    partition_strategy: str
+    partition_strategies: List[str]
+    seeds: List[int]
+    experiment_status: str
+    is_complete: bool
+    successful_runs_count: int
+    failed_runs_count: int
+    total_group_runs_count: int
+    successful_group_runs_count: int
+    failed_group_runs_count: int
+    failures: List[SeedFailureDetail]
+    warning_message: Optional[str] = None
+    experiment_config: Dict[str, Any]
+    groups: Dict[str, MultiSeedGroupResult]
+    comparison_summary: Dict[str, Any]
+
+
+class CompressionComparisonRequest(BaseModel):
+    dataset_type: str = Field(default="pems08_public", pattern="^(synthetic|pems08|pems08_public|live)$")
+    partition_strategy: str = Field(default="non_iid")
+    target_horizon_minutes: int = Field(default=15, ge=5, le=1440)
+    federated_rounds: int = Field(default=5, ge=1, le=25)
+    top_k_retention_pct: float = Field(default=50.0, gt=0.0, lt=100.0)
+    random_seed: int = Field(default=42, ge=0, le=2_147_483_647)
+
+    @field_validator("partition_strategy")
+    @classmethod
+    def check_partition_strategy(cls, value: str) -> str:
+        if value not in ("iid", "non_iid"):
+            raise ValueError(
+                f"Unsupported partition_strategy '{value}'. Supported values are 'iid' or 'non_iid'."
+            )
+        return value
+
+
+class CompressionStrategyResult(BaseModel):
+    compression_method: str
+    compression_description: str
+    federated: BenchmarkApproachResult
+    delta: BenchmarkDeltaComparison
+    mae: float
+    rmse: float
+    mae_vs_full_precision: float
+    rmse_vs_full_precision: float
+    mae_vs_centralized: float
+    rmse_vs_centralized: float
+    upload_bytes: int
+    download_bytes_modeled: int
+    total_bytes: int
+    upload_compression_ratio: Optional[float] = None
+    upload_reduction_pct: Optional[float] = None
+    bidirectional_compression_ratio: Optional[float] = None
+    bidirectional_reduction_pct: Optional[float] = None
+    mae_improvement_per_mb_upload: Optional[float] = None
+    rmse_improvement_per_mb_upload: Optional[float] = None
+    mae_improvement_per_mb_total: Optional[float] = None
+    rmse_improvement_per_mb_total: Optional[float] = None
+    payload_breakdown_per_client: Dict[str, int]
+    round_history: List[Dict[str, Any]]
+    communication_summary: Dict[str, Any]
+
+
+class CompressionComparisonResponse(BaseModel):
+    experiment_id: str
+    executed_at: str
+    dataset_id: str
+    dataset_name: str
+    dataset_provenance: str
+    is_simulated: bool = False
+    is_genuine_public: bool = False
+    data_type_label: str = "Public"
+    dataset_license: Optional[str] = None
+    source_url: Optional[str] = None
+    documentation_url: Optional[str] = None
+    sensors_count: Optional[int] = None
+    sampling_interval: Optional[str] = None
+    time_range: Optional[str] = None
+    target_unit: str = "veh/5m"
+    prediction_target: str
+    target_horizon_minutes: int
+    partition_strategy: str
+    random_seed: int
+    shared_config: Dict[str, Any]
+    centralized: BenchmarkApproachResult
+    strategies: Dict[str, CompressionStrategyResult]
+    best_accuracy_strategy: str
+    lowest_upload_strategy: str
+    overhead_limitations_note: str
+    scientific_summary: str
 
 
 class TrafficDatasetInfo(BaseModel):
@@ -251,11 +650,24 @@ class TrafficDatasetInfo(BaseModel):
     description: str
     provenance: str
     sample_frequency: str
+    sampling_interval: Optional[str] = None
     nodes_count: int
     total_samples: int
+    raw_records_total: Optional[int] = None
+    excluded_dropout_records: Optional[int] = None
     is_active: bool
     is_simulated: bool = False
+    is_genuine_public: bool = False
+    ps003_eligible: bool = False
     licensing: str
+    source_url: Optional[str] = None
+    documentation_url: Optional[str] = None
+    time_range: Optional[str] = None
+    available_features: List[str] = Field(default_factory=list)
+    prediction_target: Optional[str] = None
+    target_unit: Optional[str] = None
+    sensors_description: Optional[str] = None
+    status_error: Optional[str] = None
 
 
 class FederatedRoundStartRequest(BaseModel):
@@ -334,10 +746,27 @@ class IncidentUpdateRequest(BaseModel):
     status: str = Field(pattern="^(open|acknowledged|resolved)$")
 
 
+class IncidentCreateRequest(BaseModel):
+    intersection_id: str
+    incident_type: str = "authority_advisory"
+    severity: str = "warning"
+    description_en: str
+    description_hi: Optional[str] = None
+    recommended_action_en: str
+    recommended_action_hi: Optional[str] = None
+    source: Optional[str] = "authority_advisory"
+
+
 # --- Routes ---
 class RouteQuery(BaseModel):
-    origin_id: str
-    destination_id: str
+    origin_id: str = ""
+    destination_id: str = ""
+    origin_text: Optional[str] = None
+    destination_text: Optional[str] = None
+    origin_lat: Optional[float] = None
+    origin_lon: Optional[float] = None
+    destination_lat: Optional[float] = None
+    destination_lon: Optional[float] = None
     avoid_closed_roads: bool = True
 
 
@@ -351,6 +780,11 @@ class RouteOption(BaseModel):
     congestion_exposure_pct: float
     is_recommended: bool
     recommendation_rationale: Optional[str] = None
+    traffic_condition: str = "Smooth"
+    traffic_heavy_roads: List[str] = []
+    delay_minutes: float = 0.0
+    data_source: str = "simulated_corridor_model"
+    is_live_data: bool = False
 
 
 class RouteResponse(BaseModel):
@@ -359,6 +793,11 @@ class RouteResponse(BaseModel):
     routes: List[RouteOption]
     road_closure_active: bool
     affected_intersection: Optional[str] = None
+    origin_label: Optional[str] = None
+    destination_label: Optional[str] = None
+    data_source: str = "simulated_corridor_model"
+    is_live_data: bool = False
+    unavailable_reason: Optional[str] = None
     advisory_notice: str = "Advisory demonstration routing. Modeled on simulated Delhi NCR corridors. Obey all municipal road signs and traffic authorities."
 
 
@@ -497,6 +936,40 @@ class SavedRouteCreateRequest(BaseModel):
     notes: Optional[str] = None
 
 
+class CitizenReportTimelineDTO(BaseModel):
+    id: str
+    report_id: str
+    from_status: str
+    to_status: str
+    resolution_note: Optional[str] = None
+    actor_id: Optional[str] = None
+    actor_role: str = "authority"
+    created_at: str
+
+
+class CitizenNotificationDTO(BaseModel):
+    id: str
+    user_id: str
+    report_id: str
+    title: str
+    message: str
+    status: str
+    resolution_note: Optional[str] = None
+    location_name: Optional[str] = None
+    is_read: bool = False
+    created_at: str
+
+
+class CitizenReportStatusUpdateRequest(BaseModel):
+    status: str = Field(..., pattern="^(verified|in_progress|resolved|dismissed|unverified)$")
+    resolution_note: Optional[str] = Field(None, max_length=1000)
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def normalize_status(cls, v: Any) -> Any:
+        return v.strip().lower() if isinstance(v, str) else v
+
+
 class CitizenReportDTO(BaseModel):
     id: str
     user_id: Optional[str] = None
@@ -507,7 +980,11 @@ class CitizenReportDTO(BaseModel):
     description: str
     photo_url: Optional[str] = None
     status: str = "unverified"
+    resolution_note: Optional[str] = None
+    priority: Optional[str] = "medium"
+    updated_at: Optional[str] = None
     created_at: str
+    timeline: List[CitizenReportTimelineDTO] = []
 
 
 class CitizenReportCreateRequest(BaseModel):
@@ -517,3 +994,116 @@ class CitizenReportCreateRequest(BaseModel):
     longitude: Optional[float] = None
     description: str = Field(..., min_length=3, max_length=1000)
     photo_url: Optional[str] = None
+    user_id: Optional[str] = None
+
+
+class CitizenReportStatsDTO(BaseModel):
+    total_reports: int
+    pending_verification: int
+    verified_reports: int
+    issues_in_progress: int
+    resolved_issues: int
+    dismissed_reports: int
+    resolution_rate_pct: float
+    by_status: List[Dict[str, Any]]
+    daily_submissions: List[Dict[str, Any]]
+    area_breakdown: List[Dict[str, Any]]
+    priority_breakdown: Dict[str, int]
+
+
+# --- Emergency Vehicle Green Corridor Schemas ---
+
+class EmergencyCorridorCreateRequest(BaseModel):
+    vehicle_type: str = Field(
+        ...,
+        pattern="^(ambulance|fire_brigade|fire_truck|police|police_escort|medical_emergency|sos)$",
+    )
+    origin_id: str = Field(..., min_length=2, max_length=50)
+    origin_name: str = Field(..., min_length=2, max_length=150)
+    origin_lat: Optional[float] = None
+    origin_lon: Optional[float] = None
+    destination_id: str = Field(..., min_length=2, max_length=50)
+    destination_name: str = Field(..., min_length=2, max_length=150)
+    destination_lat: Optional[float] = None
+    destination_lon: Optional[float] = None
+    priority: str = Field(default="critical", pattern="^(critical|high|medium)$")
+    description: Optional[str] = Field(None, max_length=1000)
+    user_id: Optional[str] = None
+
+
+class EmergencyCorridorStatusUpdateRequest(BaseModel):
+    status: str = Field(..., pattern="^(REQUESTED|APPROVED|REJECTED|ACTIVE|COMPLETED|CANCELLED)$")
+    authority_notes: Optional[str] = Field(None, max_length=1000)
+
+
+class EmergencyCorridorTimelineDTO(BaseModel):
+    id: str
+    request_id: str
+    from_status: str
+    to_status: str
+    notes: Optional[str] = None
+    actor_id: Optional[str] = None
+    actor_role: str = "authority"
+    created_at: str
+
+
+class EmergencyIntersectionDetailDTO(BaseModel):
+    intersection_id: str
+    name: str
+    latitude: float
+    longitude: float
+    current_speed: float
+    congestion_level: str
+    simulated_signal_status: str
+    recommended_action: str
+
+
+class EmergencyRouteDetailDTO(BaseModel):
+    route_id: str
+    name: str
+    intersections_path: List[str]
+    distance_km: float
+    normal_travel_time_min: float
+    corridor_travel_time_min: float
+    time_saved_minutes: float
+    congestion_exposure_pct: float
+    is_recommended: bool
+    intersections: List[EmergencyIntersectionDetailDTO] = []
+
+
+class EmergencyCorridorDTO(BaseModel):
+    id: str
+    user_id: Optional[str] = None
+    vehicle_type: str
+    origin_id: str
+    origin_name: str
+    origin_lat: Optional[float] = None
+    origin_lon: Optional[float] = None
+    destination_id: str
+    destination_name: str
+    destination_lat: Optional[float] = None
+    destination_lon: Optional[float] = None
+    priority: str = "critical"
+    description: Optional[str] = None
+    status: str = "REQUESTED"
+    recommended_route_id: Optional[str] = None
+    route_path: List[str] = []
+    distance_km: float = 0.0
+    estimated_time_minutes: float = 0.0
+    priority_intersections_count: int = 0
+    authority_notes: Optional[str] = None
+    created_at: str
+    updated_at: Optional[str] = None
+    timeline: List[EmergencyCorridorTimelineDTO] = []
+    route_details: Optional[EmergencyRouteDetailDTO] = None
+
+
+class EmergencyCorridorStatsDTO(BaseModel):
+    total_requests: int
+    active_requests: int
+    approved_requests: int
+    completed_requests: int
+    cancelled_requests: int
+    rejected_requests: int
+    by_vehicle_type: Dict[str, int]
+    by_priority: Dict[str, int]
